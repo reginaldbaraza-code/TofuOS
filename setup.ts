@@ -1,0 +1,138 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@layer base {
+  :root {
+    --background: 40 30% 97%;
+    --foreground: 30 10% 15%;
+
+    --card: 40 25% 95%;
+    --card-foreground: 30 10% 15%;
+
+    --popover: 40 30% 97%;
+    --popover-foreground: 30 10% 15%;
+
+    --primary: 24 80% 50%;
+    --primary-foreground: 40 30% 97%;
+
+    --secondary: 35 20% 90%;
+    --secondary-foreground: 30 10% 25%;
+
+    --muted: 35 15% 92%;
+    --muted-foreground: 30 8% 50%;
+
+    --accent: 24 70% 55%;
+    --accent-foreground: 40 30% 97%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 40 30% 97%;
+
+    --border: 35 18% 88%;
+    --input: 35 18% 88%;
+    --ring: 24 80% 50%;
+
+    --radius: 0.625rem;
+
+    --sidebar-background: 30 15% 98%;
+    --sidebar-foreground: 30 8% 30%;
+    --sidebar-primary: 24 80% 50%;
+    --sidebar-primary-foreground: 40 30% 97%;
+    --sidebar-accent: 35 20% 93%;
+    --sidebar-accent-foreground: 30 10% 20%;
+    --sidebar-border: 35 18% 90%;
+    --sidebar-ring: 24 80% 50%;
+
+    --panel-bg: 0 0% 100%;
+    --panel-header: 35 15% 96%;
+    --suggestion-bg: 35 20% 95%;
+    --suggestion-hover: 35 25% 91%;
+    --studio-card-bg: 35 18% 96%;
+    --studio-card-hover: 35 22% 92%;
+    --chat-input-bg: 0 0% 100%;
+    --tofu-warm: 28 60% 52%;
+    --tofu-cream: 40 35% 94%;
+  }
+
+  .dark {
+    --background: 30 10% 8%;
+    --foreground: 40 20% 92%;
+    --card: 30 10% 12%;
+    --card-foreground: 40 20% 92%;
+    --popover: 30 10% 10%;
+    --popover-foreground: 40 20% 92%;
+    --primary: 24 80% 55%;
+    --primary-foreground: 30 10% 8%;
+    --secondary: 30 10% 16%;
+    --secondary-foreground: 40 20% 85%;
+    --muted: 30 8% 18%;
+    --muted-foreground: 35 10% 55%;
+    --accent: 24 70% 55%;
+    --accent-foreground: 30 10% 8%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 40 20% 92%;
+    --border: 30 8% 20%;
+    --input: 30 8% 20%;
+    --ring: 24 80% 55%;
+    --sidebar-background: 30 10% 6%;
+    --sidebar-foreground: 40 15% 80%;
+    --sidebar-primary: 24 80% 55%;
+    --sidebar-primary-foreground: 30 10% 8%;
+    --sidebar-accent: 30 8% 14%;
+    --sidebar-accent-foreground: 40 15% 85%;
+    --sidebar-border: 30 8% 18%;
+    --sidebar-ring: 24 80% 55%;
+    --panel-bg: 30 10% 10%;
+    --panel-header: 30 8% 14%;
+    --suggestion-bg: 30 8% 15%;
+    --suggestion-hover: 30 10% 20%;
+    --studio-card-bg: 30 8% 14%;
+    --studio-card-hover: 30 10% 18%;
+    --chat-input-bg: 30 10% 12%;
+    --tofu-warm: 28 65% 55%;
+    --tofu-cream: 30 12% 16%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@layer utilities {
+  .panel-bg {
+    background-color: hsl(var(--panel-bg));
+  }
+  .panel-header-bg {
+    background-color: hsl(var(--panel-header));
+  }
+  .suggestion-bg {
+    background-color: hsl(var(--suggestion-bg));
+  }
+  .suggestion-hover:hover {
+    background-color: hsl(var(--suggestion-hover));
+  }
+  .studio-card-bg {
+    background-color: hsl(var(--studio-card-bg));
+  }
+  .studio-card-hover:hover {
+    background-color: hsl(var(--studio-card-hover));
+  }
+  .chat-input-bg {
+    background-color: hsl(var(--chat-input-bg));
+  }
+  .tofu-gradient {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--tofu-warm)));
+  }
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
