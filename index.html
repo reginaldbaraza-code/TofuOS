@@ -1,26 +1,27 @@
-import js from "@eslint/js";
-import globals from "globals";
-import reactHooks from "eslint-plugin-react-hooks";
-import reactRefresh from "eslint-plugin-react-refresh";
-import tseslint from "typescript-eslint";
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>tofuOS — Cursor for Product Managers</title>
+    <meta name="description" content="AI-native product management. Upload interviews, ask what to build, get actionable specs.">
+    <meta name="author" content="tofuOS" />
+    
+    
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/503b9074-538c-4f55-ae6e-ae68874a36fa/id-preview-fd73e7e6--1cb5f0cf-e9a7-4553-9373-d0e17bcc3b01.lovable.app-1771690276118.png">
 
-export default tseslint.config(
-  { ignores: ["dist"] },
-  {
-    extends: [js.configs.recommended, ...tseslint.configs.recommended],
-    files: ["**/*.{ts,tsx}"],
-    languageOptions: {
-      ecmaVersion: 2020,
-      globals: globals.browser,
-    },
-    plugins: {
-      "react-hooks": reactHooks,
-      "react-refresh": reactRefresh,
-    },
-    rules: {
-      ...reactHooks.configs.recommended.rules,
-      "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
-      "@typescript-eslint/no-unused-vars": "off",
-    },
-  },
-);
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@Lovable" />
+    <meta name="twitter:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/503b9074-538c-4f55-ae6e-ae68874a36fa/id-preview-fd73e7e6--1cb5f0cf-e9a7-4553-9373-d0e17bcc3b01.lovable.app-1771690276118.png">
+    <meta property="og:title" content="tofuOS — Cursor for Product Managers">
+  <meta name="twitter:title" content="tofuOS — Cursor for Product Managers">
+  <meta property="og:description" content="AI-native product management. Upload interviews, ask what to build, get actionable specs.">
+  <meta name="twitter:description" content="AI-native product management. Upload interviews, ask what to build, get actionable specs.">
+</head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
