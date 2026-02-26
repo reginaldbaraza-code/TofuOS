@@ -1,5 +1,6 @@
-import { Plus, BarChart3, Share2, Settings, ChevronDown } from "lucide-react";
+import { Plus, BarChart3, Share2, Settings, ChevronDown, LogOut } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const outputTypes = [
   "PRD",
@@ -16,6 +17,7 @@ const outputTypes = [
 ];
 
 const TopBar = () => {
+  const { user, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedType, setSelectedType] = useState("PRD");
 
@@ -97,7 +99,17 @@ const TopBar = () => {
             <Settings className="w-4 h-4" />
           </button>
         </div>
-        <div className="w-8 h-8 rounded-full tofu-gradient ml-1 md:ml-2 flex-shrink-0" />
+        <button
+          onClick={logout}
+          className="hidden md:flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+          title="Sign out"
+        >
+          <LogOut className="w-4 h-4" />
+          Sign out
+        </button>
+        <div className="w-8 h-8 rounded-full tofu-gradient ml-1 md:ml-2 flex-shrink-0 flex items-center justify-center text-primary-foreground text-xs font-medium" title={user?.email}>
+          {user?.displayName?.charAt(0) ?? user?.email?.charAt(0) ?? "?"}
+        </div>
       </div>
     </header>
   );

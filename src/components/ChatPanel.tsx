@@ -1,5 +1,8 @@
-import { useState } from "react";
-import { Send, ThumbsUp, ThumbsDown, Copy, Pin, SlidersHorizontal, MoreVertical } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Send, ThumbsUp, ThumbsDown, Copy, Pin, SlidersHorizontal, MoreVertical, Sparkles, ExternalLink } from "lucide-react";
+import { fetchSources, analyzeSources, getJiraConfig } from "@/lib/api";
+import JiraConfigModal from "@/components/JiraConfigModal";
+import CreateJiraModal from "@/components/CreateJiraModal";
 
 interface Message {
   role: "user" | "assistant";
@@ -21,6 +24,54 @@ const ChatPanel = () => {
     },
   ]);
   const [input, setInput] = useState("");
+  const [insights, setInsights] = useState<string[]>([]);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
+  const [jiraConfigured, setJiraConfigured] = useState(false);
+  const [jiraConfigModalOpen, setJiraConfigModalOpen] = useState(false);
+  const [createJiraModalOpen, setCreateJiraModalOpen] = useState(false);
+  const [createJiraInsight, setCreateJiraInsight] = useState("");
+
+  useEffect(() => {
+    getJiraConfig().then((c) => setJiraConfigured(!!c?.configured));
+  }, [jiraConfigModalOpen, createJiraModalOpen]);
+
+  const handleAnalyze = async () => {
+    setAnalyzeError(null);
+    setAnalyzing(true);
+    try {
+      const sources = await fetchSources();
+      const selectedIds = sources.filter((s) => s.selected).map((s) => s.id);
+      if (selectedIds.length === 0) {
+        setAnalyzeError("Select at least one source in the left panel.");
+        return;
+      }
+      const { insights: list } = await analyzeSources(selectedIds);
+      setInsights(list || []);
+    } catch (e) {
+      setAnalyzeError(e instanceof Error ? e.message : "Analysis failed");
+      setInsights([]);
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  const handleCreateJiraClick = (insight: string) => {
+    if (!jiraConfigured) {
+      setJiraConfigModalOpen(true);
+      setCreateJiraInsight(insight);
+    } else {
+      setCreateJiraInsight(insight);
+      setCreateJiraModalOpen(true);
+    }
+  };
+
+  const handleJiraConfigSaved = () => {
+    setJiraConfigured(true);
+    if (createJiraInsight) {
+      setCreateJiraModalOpen(true);
+    }
+  };
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -52,6 +103,14 @@ const ChatPanel = () => {
       <div className="px-6 py-3 border-b border-border flex items-center justify-between">
         <h2 className="text-sm font-semibold text-foreground">Chat</h2>
         <div className="flex items-center gap-1">
+          <button
+            onClick={handleAnalyze}
+            disabled={analyzing}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium tofu-gradient text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-70"
+          >
+            <Sparkles className="w-4 h-4" />
+            {analyzing ? "Analyzing…" : "Analyze sources"}
+          </button>
           <button className="p-2 rounded-lg hover:bg-muted transition-colors">
             <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
           </button>
@@ -60,6 +119,34 @@ const ChatPanel = () => {
           </button>
         </div>
       </div>
+
+      {/* Insights list (PM analysis) */}
+      {insights.length > 0 && (
+        <div className="px-6 py-4 border-b border-border bg-muted/30">
+          <h3 className="text-sm font-medium text-foreground mb-3">Insights (project manager)</h3>
+          <ul className="space-y-2">
+            {insights.map((insight, i) => (
+              <li
+                key={i}
+                className="flex items-start gap-2 text-sm text-foreground bg-background border border-border rounded-lg px-3 py-2"
+              >
+                <span className="flex-1 min-w-0">{insight}</span>
+                <button
+                  type="button"
+                  onClick={() => handleCreateJiraClick(insight)}
+                  className="flex items-center gap-1.5 shrink-0 px-2.5 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  Create Jira ticket
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {analyzeError && (
+        <div className="px-6 py-2 text-sm text-destructive">{analyzeError}</div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
@@ -136,6 +223,17 @@ const ChatPanel = () => {
           tofuOS can make mistakes. Please verify the responses.
         </p>
       </div>
+
+      <JiraConfigModal
+        open={jiraConfigModalOpen}
+        onOpenChange={setJiraConfigModalOpen}
+        onSaved={handleJiraConfigSaved}
+      />
+      <CreateJiraModal
+        open={createJiraModalOpen}
+        onOpenChange={setCreateJiraModalOpen}
+        insight={createJiraInsight}
+      />
     </main>
   );
 };

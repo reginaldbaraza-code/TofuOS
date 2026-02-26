@@ -1,32 +1,64 @@
-import { Plus, Search, FileText, Upload, Link, CheckSquare } from "lucide-react";
-import { useState } from "react";
-
-interface Source {
-  id: string;
-  name: string;
-  type: "pdf" | "link" | "transcript";
-  selected: boolean;
-}
-
-const initialSources: Source[] = [
-  { id: "1", name: "Customer_Interviews_Q4.pdf", type: "pdf", selected: true },
-  { id: "2", name: "Usage_Analytics_Jan2026.csv", type: "transcript", selected: true },
-  { id: "3", name: "Competitor_Analysis.pdf", type: "pdf", selected: false },
-];
+import { Plus, Search, FileText, Link, Star, FileSpreadsheet } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import AddSourcesModal from "@/components/AddSourcesModal";
+import type { StoreType } from "@/components/AddSourcesModal";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  fetchSources,
+  updateSources,
+  addReviewsSource,
+  addDocumentSources,
+  type Source,
+} from "@/lib/api";
 
 const SourcesPanel = ({ mobile }: { mobile?: boolean }) => {
-  const [sources, setSources] = useState<Source[]>(initialSources);
+  const { isAuthenticated } = useAuth();
+  const [sources, setSources] = useState<Source[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const toggleSource = (id: string) => {
-    setSources((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, selected: !s.selected } : s))
-    );
+  const loadSources = useCallback(async () => {
+    if (!isAuthenticated) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const list = await fetchSources();
+      setSources(list);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load sources");
+      setSources([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    loadSources();
+  }, [loadSources]);
+
+  const toggleSource = async (id: string) => {
+    const next = sources.map((s) => (s.id === id ? { ...s, selected: !s.selected } : s));
+    setSources(next);
+    try {
+      const saved = await updateSources(next);
+      setSources(saved);
+    } catch {
+      setSources(sources);
+    }
   };
 
-  const allSelected = sources.every((s) => s.selected);
-  const toggleAll = () => {
-    setSources((prev) => prev.map((s) => ({ ...s, selected: !allSelected })));
+  const allSelected = sources.length > 0 && sources.every((s) => s.selected);
+  const toggleAll = async () => {
+    const next = sources.map((s) => ({ ...s, selected: !allSelected }));
+    setSources(next);
+    try {
+      const saved = await updateSources(next);
+      setSources(saved);
+    } catch {
+      setSources(sources);
+    }
   };
 
   const iconForType = (type: Source["type"]) => {
@@ -34,6 +66,26 @@ const SourcesPanel = ({ mobile }: { mobile?: boolean }) => {
       case "pdf": return <FileText className="w-4 h-4 text-destructive" />;
       case "link": return <Link className="w-4 h-4 text-primary" />;
       case "transcript": return <FileText className="w-4 h-4 text-tofu-warm" />;
+      case "reviews": return <Star className="w-4 h-4 text-amber-500" />;
+      case "document": return <FileSpreadsheet className="w-4 h-4 text-emerald-600" />;
+    }
+  };
+
+  const handleAddReviews = async (store: StoreType, appPageUrl: string) => {
+    try {
+      await addReviewsSource(store, appPageUrl);
+      await loadSources();
+    } catch (e) {
+      throw e;
+    }
+  };
+
+  const handleAddDocuments = async (files: File[]) => {
+    try {
+      await addDocumentSources(files);
+      await loadSources();
+    } catch (e) {
+      throw e;
     }
   };
 
@@ -47,10 +99,19 @@ const SourcesPanel = ({ mobile }: { mobile?: boolean }) => {
       </div>
 
       <div className="p-3">
-        <button className="w-full flex items-center justify-center gap-2 py-2.5 px-4 border border-dashed border-border rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+        <button
+          onClick={() => setAddModalOpen(true)}
+          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 border border-dashed border-border rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+        >
           <Plus className="w-4 h-4" />
           Add Sources
         </button>
+        <AddSourcesModal
+          open={addModalOpen}
+          onOpenChange={setAddModalOpen}
+          onAddReviews={handleAddReviews}
+          onAddDocuments={handleAddDocuments}
+        />
       </div>
 
       <div className="px-3 pb-2">
@@ -79,7 +140,12 @@ const SourcesPanel = ({ mobile }: { mobile?: boolean }) => {
       </div>
 
       <div className="flex-1 overflow-y-auto px-3 space-y-1">
-        {sources
+        {loading ? (
+          <p className="text-sm text-muted-foreground py-4 text-center">Loading sources…</p>
+        ) : error ? (
+          <p className="text-sm text-destructive py-4 text-center">{error}</p>
+        ) : (
+          sources
           .filter((s) => s.name.toLowerCase().includes(searchQuery.toLowerCase()))
           .map((source) => (
             <div
@@ -93,7 +159,7 @@ const SourcesPanel = ({ mobile }: { mobile?: boolean }) => {
               {iconForType(source.type)}
               <span className="text-sm truncate text-foreground">{source.name}</span>
             </div>
-          ))}
+          )))}
       </div>
     </aside>
   );
