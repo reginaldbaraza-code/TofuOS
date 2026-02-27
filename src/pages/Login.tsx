@@ -27,12 +27,10 @@ import { AlertCircle } from "lucide-react";
 const loginSchema = z.object({
   email: z
     .string()
-    .min(1, "Email is required")
-    .email("Please enter a valid email address"),
+    .min(1, "Email is required"),
   password: z
     .string()
-    .min(1, "Password is required")
-    .min(6, "Password must be at least 6 characters"),
+    .min(1, "Password is required"),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -94,12 +92,12 @@ const Login = () => {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>Email or Username</FormLabel>
                     <FormControl>
                       <Input
-                        type="email"
-                        placeholder="you@example.com"
-                        autoComplete="email"
+                        type="text"
+                        placeholder="Email or username"
+                        autoComplete="username"
                         disabled={isSubmitting}
                         {...field}
                       />
@@ -138,7 +136,7 @@ const Login = () => {
           </Form>
 
           <p className="text-xs text-center text-muted-foreground">
-            Demo: demo@tofuos.dev / any password 6+ characters
+            Demo: any email and password
           </p>
         </CardContent>
       </Card>

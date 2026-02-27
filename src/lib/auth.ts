@@ -83,7 +83,7 @@ export async function login(credentials: LoginCredentials): Promise<LoginResult>
     user: {
       id: "mock-user-id",
       email: credentials.email,
-      displayName: credentials.email.split("@")[0] || "User",
+      displayName: credentials.email.split("@")[0] || credentials.email || "User",
     },
     token: "mock-jwt-token",
     expiresAt: Date.now() + 1000 * 60 * 60 * 24 * 7, // 7 days
