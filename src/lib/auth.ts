@@ -69,8 +69,6 @@ export function clearSession(): void {
   }
 }
 
-const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
-
 /**
  * Login: simulates successful login with mock user.
  */
