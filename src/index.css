@@ -132,6 +132,12 @@
   .tofu-gradient {
     background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--tofu-warm)));
   }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .mb-safe {
+    margin-bottom: env(safe-area-inset-bottom);
+  }
   .font-mono {
     font-family: 'JetBrains Mono', monospace;
   }

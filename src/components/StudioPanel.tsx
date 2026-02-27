@@ -71,7 +71,7 @@ const StudioPanel = ({ mobile }: { mobile?: boolean }) => {
       </div>
 
       {/* Studio Output Area */}
-      <div className="p-4 border-t border-border">
+      <div className="p-4 border-t border-border bg-background pb-safe">
         <div className="flex flex-col items-center text-center py-6">
           <Sparkles className="w-6 h-6 text-primary mb-2" />
           <p className="text-sm font-medium text-primary">

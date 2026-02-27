@@ -13,7 +13,7 @@ const Index = () => {
 
   if (isMobile) {
     return (
-      <div className="h-screen flex flex-col bg-background overflow-hidden">
+      <div className="h-[100dvh] flex flex-col bg-background overflow-hidden">
         <TopBar />
         {/* Tab bar */}
         <div className="flex border-b border-border">

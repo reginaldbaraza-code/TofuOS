@@ -90,7 +90,7 @@ const SourcesPanel = ({ mobile }: { mobile?: boolean }) => {
   };
 
   return (
-    <aside className={`${mobile ? "w-full h-full" : "w-72 min-w-[280px] border-r"} border-border flex flex-col panel-bg`}>
+    <aside className={`${mobile ? "w-full h-full" : "w-72 min-w-[280px] border-r"} border-border flex flex-col panel-bg pb-safe`}>
       <div className="p-4 border-b border-border flex items-center justify-between">
         <h2 className="text-sm font-semibold text-foreground">Sources</h2>
         <button className="p-1 rounded hover:bg-muted transition-colors">

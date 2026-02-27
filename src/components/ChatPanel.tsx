@@ -199,8 +199,8 @@ const ChatPanel = () => {
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-border">
-        <div className="flex items-center gap-2 chat-input-bg border border-border rounded-xl px-4 py-2 focus-within:ring-2 focus-within:ring-ring transition-shadow">
+      <div className="p-4 border-t border-border bg-background">
+        <div className="flex items-center gap-2 chat-input-bg border border-border rounded-xl px-4 py-2 focus-within:ring-2 focus-within:ring-ring transition-shadow mb-safe">
           <input
             type="text"
             placeholder="Type a message..."
