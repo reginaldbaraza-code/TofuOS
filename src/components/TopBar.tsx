@@ -17,7 +17,7 @@ const outputTypes = [
 ];
 
 const TopBar = () => {
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedType, setSelectedType] = useState("PRD");
 
@@ -100,7 +100,7 @@ const TopBar = () => {
           </button>
         </div>
         <button
-          onClick={logout}
+          onClick={signOut}
           className="hidden md:flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
           title="Sign out"
         >
@@ -108,7 +108,7 @@ const TopBar = () => {
           Sign out
         </button>
         <div className="w-8 h-8 rounded-full tofu-gradient ml-1 md:ml-2 flex-shrink-0 flex items-center justify-center text-primary-foreground text-xs font-medium" title={user?.email}>
-          {user?.displayName?.charAt(0) ?? user?.email?.charAt(0) ?? "?"}
+          {user?.user_metadata?.display_name?.charAt(0) ?? user?.email?.charAt(0) ?? "?"}
         </div>
       </div>
     </header>

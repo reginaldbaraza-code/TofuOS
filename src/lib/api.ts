@@ -1,7 +1,7 @@
 /**
- * API client for tofuOS - Frontend-only mock implementation.
- * All backend dependencies have been removed.
+ * API client for tofuOS - Supabase and OpenAI implementation.
  */
+import { supabase } from './supabase/client';
 
 export interface Source {
   id: string;
@@ -9,46 +9,31 @@ export interface Source {
   type: "pdf" | "link" | "transcript" | "reviews" | "document";
   selected: boolean;
   meta?: { store?: "play" | "apple"; url?: string; fileId?: string };
-}
-
-const STORAGE_KEY_SOURCES = "tofuos_sources";
-
-const DEFAULT_SOURCES: Source[] = [
-  { id: "s1", name: "Customer Interviews Q4.pdf", type: "pdf", selected: true },
-  { id: "s2", name: "App Store Reviews", type: "reviews", selected: true },
-  { id: "s3", name: "Product Roadmap 2024", type: "document", selected: false },
-  { id: "s4", name: "competitor-analysis.link", type: "link", selected: false },
-];
-
-function getStoredSources(): Source[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY_SOURCES);
-    if (!raw) {
-      localStorage.setItem(STORAGE_KEY_SOURCES, JSON.stringify(DEFAULT_SOURCES));
-      return DEFAULT_SOURCES;
-    }
-    return JSON.parse(raw);
-  } catch {
-    return DEFAULT_SOURCES;
-  }
-}
-
-function saveStoredSources(sources: Source[]): void {
-  try {
-    localStorage.setItem(STORAGE_KEY_SOURCES, JSON.stringify(sources));
-  } catch (e) {
-    console.error("Failed to save sources to localStorage", e);
-  }
+  user_id?: string;
 }
 
 export async function fetchSources(): Promise<Source[]> {
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  return getStoredSources();
+  const { data, error } = await supabase
+    .from('sources')
+    .select('*')
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching sources:', error);
+    return [];
+  }
+  return data as Source[];
 }
 
 export async function updateSources(sources: Source[]): Promise<Source[]> {
-  saveStoredSources(sources);
+  // In a real DB, we might want to update individually, but for a mock-to-real migration,
+  // we'll handle the 'selected' status updates.
+  for (const source of sources) {
+    await supabase
+      .from('sources')
+      .update({ selected: source.selected })
+      .eq('id', source.id);
+  }
   return sources;
 }
 
@@ -56,57 +41,61 @@ export async function addReviewsSource(
   store: "play" | "apple",
   appPageUrl: string
 ): Promise<Source> {
-  await new Promise((resolve) => setTimeout(resolve, 800));
-  
-  const newSource: Source = {
-    id: `s-${Date.now()}`,
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const newSource = {
     name: `${store === "play" ? "Play Store" : "App Store"} Reviews`,
     type: "reviews",
     selected: true,
-    meta: { store, url: appPageUrl }
+    meta: { store, url: appPageUrl },
+    user_id: user.id
   };
-  
-  const sources = getStoredSources();
-  const next = [...sources, newSource];
-  saveStoredSources(next);
-  
-  return newSource;
+
+  const { data, error } = await supabase
+    .from('sources')
+    .insert(newSource)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Source;
 }
 
 export async function addDocumentSources(files: File[]): Promise<Source[]> {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  
-  const newSources: Source[] = files.map((file, i) => ({
-    id: `f-${Date.now()}-${i}`,
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const newSources = files.map((file) => ({
     name: file.name,
     type: file.name.toLowerCase().endsWith(".pdf") ? "pdf" : "document",
     selected: true,
+    user_id: user.id
   }));
-  
-  const sources = getStoredSources();
-  const next = [...sources, ...newSources];
-  saveStoredSources(next);
-  
-  return newSources;
+
+  const { data, error } = await supabase
+    .from('sources')
+    .insert(newSources)
+    .select();
+
+  if (error) throw error;
+  return data as Source[];
 }
 
 // --- Analyze (AI PM insights) ---
 export async function analyzeSources(sourceIds: string[]): Promise<{ insights: string[] }> {
-  // Mock insights
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  
-  if (sourceIds.length === 0) {
-    return { insights: [] };
+  const response = await fetch('/api/analyze', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sourceIds }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Analysis failed');
   }
 
-  return {
-    insights: [
-      "Users frequently complain about the slow loading times in the mobile app.",
-      "70% of feedback mentions the new UI is confusing to navigate.",
-      "Several high-value customers are requesting a dark mode feature.",
-      "The integration with Slack is highly praised by power users."
-    ]
-  };
+  return response.json();
 }
 
 // --- Jira ---
@@ -115,24 +104,46 @@ export interface JiraConfig {
   domain?: string;
   email?: string;
   hasToken?: boolean;
+  lastProjectKey?: string;
 }
 
-const STORAGE_KEY_JIRA = "tofuos_jira_config";
-
 export async function getJiraConfig(): Promise<JiraConfig | null> {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY_JIRA);
-    if (!raw) return { configured: false };
-    const config = JSON.parse(raw);
-    return { ...config, configured: true, hasToken: !!config.apiToken };
-  } catch {
+  const { data, error } = await supabase
+    .from('jira_configs')
+    .select('*')
+    .single();
+
+  if (error && error.code !== 'PGRST116') { // PGRST116 is 'no rows found'
+    console.error('Error fetching Jira config:', error);
     return { configured: false };
   }
+
+  if (!data) return { configured: false };
+
+  return { 
+    ...data, 
+    configured: true, 
+    hasToken: !!data.api_token,
+    lastProjectKey: data.last_project_key
+  };
 }
 
 export async function saveJiraConfig(domain: string, email: string, apiToken: string): Promise<void> {
-  const config = { domain, email, apiToken };
-  localStorage.setItem(STORAGE_KEY_JIRA, JSON.stringify(config));
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { error } = await supabase
+    .from('jira_configs')
+    .upsert({ 
+      domain, 
+      email, 
+      api_token: apiToken,
+      user_id: user.id 
+    }, {
+      onConflict: 'user_id'
+    });
+
+  if (error) throw error;
 }
 
 export async function createJiraIssue(params: {
@@ -141,13 +152,22 @@ export async function createJiraIssue(params: {
   projectKey?: string;
   issueType?: string;
 }): Promise<{ key: string; id: string; url: string }> {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  // Pass the access token to the server route
+  const { data: { session } } = await supabase.auth.getSession();
   
-  // Return a mock Jira issue
-  const id = Math.floor(Math.random() * 10000);
-  return {
-    key: `TOFU-${id}`,
-    id: id.toString(),
-    url: `https://mock-jira.atlassian.net/browse/TOFU-${id}`
-  };
+  const response = await fetch('/api/jira/create-issue', {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {})
+    },
+    body: JSON.stringify(params),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to create Jira issue');
+  }
+
+  return response.json();
 }

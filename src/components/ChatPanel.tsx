@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from "react";
 import { Send, ThumbsUp, ThumbsDown, Copy, Pin, SlidersHorizontal, MoreVertical, Sparkles, ExternalLink } from "lucide-react";
 import { fetchSources, analyzeSources, getJiraConfig } from "@/lib/api";
@@ -31,10 +33,14 @@ const ChatPanel = () => {
   const [jiraConfigModalOpen, setJiraConfigModalOpen] = useState(false);
   const [createJiraModalOpen, setCreateJiraModalOpen] = useState(false);
   const [createJiraInsight, setCreateJiraInsight] = useState("");
+  const [lastProjectKey, setLastProjectKey] = useState("");
 
   useEffect(() => {
-    getJiraConfig().then((c) => setJiraConfigured(!!c?.configured));
-  }, [jiraConfigModalOpen, createJiraModalOpen]);
+    getJiraConfig().then((c) => {
+      setJiraConfigured(!!c?.configured);
+      if (c?.lastProjectKey) setLastProjectKey(c.lastProjectKey);
+    });
+  }, []);
 
   const handleAnalyze = async () => {
     setAnalyzeError(null);
@@ -67,7 +73,10 @@ const ChatPanel = () => {
   };
 
   const handleJiraConfigSaved = () => {
-    setJiraConfigured(true);
+    getJiraConfig().then((c) => {
+      setJiraConfigured(!!c?.configured);
+      if (c?.lastProjectKey) setLastProjectKey(c.lastProjectKey);
+    });
     if (createJiraInsight) {
       setCreateJiraModalOpen(true);
     }
@@ -233,6 +242,10 @@ const ChatPanel = () => {
         open={createJiraModalOpen}
         onOpenChange={setCreateJiraModalOpen}
         insight={createJiraInsight}
+        initialProjectKey={lastProjectKey}
+        onCreated={(url, key) => {
+          setLastProjectKey(key);
+        }}
       />
     </main>
   );

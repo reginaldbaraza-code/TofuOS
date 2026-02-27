@@ -1,162 +1,82 @@
-# Welcome to your Lovable project
+# tofuOS - Team Guide 🧊
 
-## Project info
+Welcome to **tofuOS**, an AI-powered product management workspace. This guide will help you get the project running locally and connected to our cloud services.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## 🛠 Tech Stack & Services
 
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Running with the backend (user data persistence)**
-
-To have login and sources saved per user and persist across logout/refresh, run the API server as well:
-
-```sh
-# Terminal 1: install and start the backend (from project root)
-cd server && npm i && cd .. && npm run server
-
-# Terminal 2: start the frontend
-npm run dev
-```
-
-Then open http://localhost:8080. The frontend proxies `/api` to the server (port 3001). User data is stored under the `data/` folder.
-
-**AI analysis and Jira**
-
-- **Analyze sources:** In the Chat panel, use **Analyze sources** to run an AI (project-manager style) analysis on your selected sources. Requires `OPENAI_API_KEY` to be set (see **How to set the OpenAI API key** below).
-- **Jira:** Configure Jira (domain, email, API token) when you first click **Create Jira ticket** on an insight. Credentials are stored per user in the backend.
+| Service | Tool | Purpose | Link |
+| :--- | :--- | :--- | :--- |
+| **Frontend** | [Next.js](https://nextjs.org/) | App Framework (App Router) | - |
+| **Auth & DB** | [Supabase](https://supabase.com/) | User Login & Postgres Database | [Dashboard](https://supabase.com/dashboard) |
+| **AI Processing** | [OpenAI](https://openai.com/) | Insights Generation (GPT-4o-mini) | [API Keys](https://platform.openai.com/api-keys) |
+| **Ticketing** | [Jira Cloud](https://atlassian.com/software/jira) | Issue Tracking & Project Management | [Atlassian API Tokens](https://id.atlassian.com/manage-profile/security/api-tokens) |
 
 ---
 
-## How to set the OpenAI API key (step-by-step)
+## 🚀 Getting Started
 
-The key is used by the **backend** (the `server/` app). **Never put it in your code or commit it to GitHub.**
+### 1. Configure Your Environment
+Create a file named `.env.local` in the root folder and add your specific keys:
 
-### Option A: Backend running on your computer (local)
+```text
+# Supabase (Found in Project Settings -> API)
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
-1. **Get your API key**  
-   Go to [platform.openai.com/api-keys](https://platform.openai.com/api-keys), sign in, and create a new key. Copy it (it starts with `sk-...`).
+# OpenAI (Currently in Mock Mode for testing)
+OPENAI_API_KEY=your_openai_api_key
+```
 
-2. **Open a terminal** in your project folder (the one that contains the `server` folder).
+### 2. Initialize the Database
+Go to your **Supabase SQL Editor** and run these two scripts to create our tables:
 
-3. **Start the server with the key**  
-   Run this in the terminal — replace `sk-your-actual-key-here` with your real key:
+#### Table: `sources` (For PDF/App Review tracking)
+```sql
+create table sources (
+  id uuid default gen_random_uuid() primary key,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  name text not null,
+  type text not null,
+  selected boolean default true,
+  meta jsonb,
+  user_id uuid references auth.users(id) on delete cascade not null
+);
 
-   **Mac / Linux:**
-   ```bash
-   OPENAI_API_KEY=sk-your-actual-key-here npm run server
-   ```
+alter table sources enable row level security;
+create policy "Users can manage their own sources" on sources for all using (auth.uid() = user_id);
+```
 
-   **Windows (Command Prompt):**
-   ```bash
-   set OPENAI_API_KEY=sk-your-actual-key-here && npm run server
-   ```
+#### Table: `jira_configs` (To save your Jira login only once)
+```sql
+create table jira_configs (
+  id uuid default gen_random_uuid() primary key,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  domain text not null,
+  email text not null,
+  api_token text not null,
+  user_id uuid references auth.users(id) on delete cascade unique not null
+);
 
-   **Windows (PowerShell):**
-   ```powershell
-   $env:OPENAI_API_KEY="sk-your-actual-key-here"; npm run server
-   ```
+alter table jira_configs enable row level security;
+create policy "Users can manage their own jira config" on jira_configs for all using (auth.uid() = user_id);
+```
 
-   Leave this terminal open while you use the app. In another terminal, run `npm run dev` for the frontend.
+### 3. Run Locally
+Open your terminal in the project folder and run:
 
-4. **Optional — use a `.env` file**  
-   To avoid typing the key every time: in the **project root** (same level as the `server` folder), create a file named `.env` and add one line:  
-   `OPENAI_API_KEY=sk-your-actual-key-here`  
-   Save. The file is in `.gitignore`, so it won’t be pushed to GitHub. You still need to load it when starting the server (e.g. run the same command as in step 3, or use a tool that loads `.env`).
+```bash
+# Install dependencies
+npm install
 
-### Option B: Backend running on Railway, Render, or Fly.io
-
-1. **Get your API key**  
-   Same as Option A, step 1.
-
-2. **Open your backend project** on the host (e.g. [railway.app](https://railway.app) → your project).
-
-3. **Find the environment / variables section**  
-   - **Railway:** Project → your service → **Variables** tab.  
-   - **Render:** Dashboard → your service → **Environment** (or **Environment Variables**).  
-   - **Fly.io:** In the terminal, run:  
-     `fly secrets set OPENAI_API_KEY=sk-your-actual-key-here`
-
-4. **Add the variable**  
-   - **Name:** `OPENAI_API_KEY`  
-   - **Value:** paste your key (the full `sk-...` string).  
-   Save. The host will restart the server and use the new key.
-
-5. **Redeploy** if the host didn’t auto-redeploy, then try **Analyze sources** again in the app.
+# Start development server
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) to see it in action!
 
 ---
 
-**Deploying to Vercel (GitHub → Vercel)**
+## 💡 Pro Tips for the Team
 
-- **Frontend:** Pushing to GitHub with Vercel connected will build and deploy the **Vite app** only. The site will load, but **login, sources, AI analysis, and Jira will not work** until the API is available.
-- **Never commit secrets.** Do not put `OPENAI_API_KEY`, Jira tokens, or any API keys in the repo. Use environment variables everywhere.
-- **Backend elsewhere:** The Express server in `server/` does not run on Vercel. Deploy it to a Node host (e.g. [Railway](https://railway.app), [Render](https://render.com), [Fly.io](https://fly.io)) and set `OPENAI_API_KEY` (and any other env vars) in that host’s dashboard.
-- **Point frontend at the API:** In the Vercel project, go to **Settings → Environment Variables** and add:
-  - **`VITE_API_URL`** = your backend URL (e.g. `https://your-app.railway.app`), no trailing slash.
-  - Redeploy so the frontend uses this URL for all `/api` requests.
-- **Security:** Keep `.env` and `data/` in `.gitignore` (they already are). Add secrets only in Vercel (for `VITE_*` if needed) and in your backend host’s env (for `OPENAI_API_KEY`, etc.).
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- **AI Analysis**: Currently, the app is in **Mock Mode** for AI insights. This means you can test the "Analyze sources" button for free without using OpenAI credits.
+- **Jira Integration**: To create a real ticket, you'll need a **Jira API Token**. You only need to enter your details once; the app saves them to your private Supabase profile.
+- **Project Keys**: When creating a Jira ticket, make sure to use your project's **Key** (e.g., `KAN` or `DEV`). You can find this key next to your project name in Jira.

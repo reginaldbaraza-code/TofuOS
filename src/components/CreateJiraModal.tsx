@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -15,18 +17,20 @@ interface CreateJiraModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   insight: string;
-  onCreated?: (url: string) => void;
+  initialProjectKey?: string;
+  onCreated?: (url: string, projectKey: string) => void;
 }
 
 export default function CreateJiraModal({
   open,
   onOpenChange,
   insight,
+  initialProjectKey = "",
   onCreated,
 }: CreateJiraModalProps) {
   const [summary, setSummary] = useState(insight);
   const [description, setDescription] = useState(insight);
-  const [projectKey, setProjectKey] = useState("");
+  const [projectKey, setProjectKey] = useState(initialProjectKey);
   const [issueType, setIssueType] = useState("Task");
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -36,9 +40,10 @@ export default function CreateJiraModal({
     if (open) {
       setSummary(insight);
       setDescription(insight);
+      setProjectKey(initialProjectKey);
       setCreatedUrl(null);
     }
-  }, [open, insight]);
+  }, [open, insight, initialProjectKey]);
 
   const reset = () => {
     setSummary(insight);
@@ -60,16 +65,20 @@ export default function CreateJiraModal({
       setError("Summary is required.");
       return;
     }
+    if (!projectKey.trim()) {
+      setError("Project key is required (e.g. KAN).");
+      return;
+    }
     setCreating(true);
     try {
       const result = await createJiraIssue({
         summary: summary.trim(),
         description: description.trim() || summary.trim(),
-        projectKey: projectKey.trim() || undefined,
+        projectKey: projectKey.trim(),
         issueType: issueType.trim() || undefined,
       });
       setCreatedUrl(result.url);
-      onCreated?.(result.url);
+      onCreated?.(result.url, projectKey.trim());
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to create issue");
     } finally {

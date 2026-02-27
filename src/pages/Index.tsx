@@ -1,3 +1,5 @@
+'use client';
+
 import TopBar from "@/components/TopBar";
 import SourcesPanel from "@/components/SourcesPanel";
 import ChatPanel from "@/components/ChatPanel";

@@ -1,72 +1,70 @@
-import * as React from "react";
-import {
-  loadSession,
-  clearSession,
-  login as authLogin,
-  logoutRequest,
-  type Session,
-  type LoginCredentials,
-} from "@/lib/auth";
+'use client';
 
-interface AuthState {
+import * as React from 'react';
+import { supabase } from '@/lib/supabase/client';
+import type { User, Session } from '@supabase/supabase-js';
+import { useRouter } from 'next/navigation';
+
+interface AuthContextValue {
+  user: User | null;
   session: Session | null;
-  isInitialized: boolean;
-}
-
-interface AuthContextValue extends AuthState {
-  user: Session["user"] | null;
-  login: (credentials: LoginCredentials) => Promise<{ success: boolean; error?: string }>;
-  logout: () => void;
+  isLoading: boolean;
+  signOut: () => Promise<void>;
   isAuthenticated: boolean;
 }
 
-const AuthContext = React.createContext<AuthContextValue | null>(null);
+const AuthContext = React.createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = React.useState<AuthState>({
-    session: null,
-    isInitialized: false,
-  });
+  const [user, setUser] = React.useState<User | null>(null);
+  const [session, setSession] = React.useState<Session | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const router = useRouter();
 
-  // Initialize session from storage on mount
   React.useEffect(() => {
-    const session = loadSession();
-    setState({ session, isInitialized: true });
-  }, []);
+    const setData = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      setSession(session);
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+    };
 
-  const login = React.useCallback(async (credentials: LoginCredentials) => {
-    const result = await authLogin(credentials);
-    if (result.success) {
-      setState((prev) => ({ ...prev, session: result.session }));
-      return { success: true };
-    }
-    return { success: false, error: result.error };
-  }, []);
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+      
+      if (_event === 'SIGNED_IN') {
+        router.refresh();
+      }
+      if (_event === 'SIGNED_OUT') {
+        router.push('/login');
+        router.refresh();
+      }
+    });
 
-  const logout = React.useCallback(() => {
-    const token = state.session?.token;
-    if (token) logoutRequest(token);
-    setState((prev) => ({ ...prev, session: null }));
-  }, [state.session?.token]);
+    setData();
 
-  const value: AuthContextValue = React.useMemo(
-    () => ({
-      ...state,
-      user: state.session?.user ?? null,
-      login,
-      logout,
-      isAuthenticated: !!state.session,
-    }),
-    [state, login, logout],
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, [router]);
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, session, isLoading, signOut, isAuthenticated: !!user }}>
+      {children}
+    </AuthContext.Provider>
   );
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export function useAuth(): AuthContextValue {
-  const ctx = React.useContext(AuthContext);
-  if (!ctx) {
-    throw new Error("useAuth must be used within AuthProvider");
+export const useAuth = () => {
+  const context = React.useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
   }
-  return ctx;
-}
+  return context;
+};

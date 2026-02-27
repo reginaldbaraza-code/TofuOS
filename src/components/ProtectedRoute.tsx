@@ -1,5 +1,8 @@
-import { Navigate, useLocation } from "react-router-dom";
+'use client';
+
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -7,13 +10,19 @@ interface ProtectedRouteProps {
 
 /**
  * Renders children only when the user is authenticated.
- * Redirects to /login otherwise, preserving the intended destination in state.
+ * Redirects to /login otherwise.
  */
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { isAuthenticated, isInitialized } = useAuth();
-  const location = useLocation();
+  const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
 
-  if (!isInitialized) {
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isLoading, isAuthenticated, router]);
+
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-8 h-8 rounded-lg tofu-gradient animate-pulse" />
@@ -22,7 +31,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return null;
   }
 
   return <>{children}</>;

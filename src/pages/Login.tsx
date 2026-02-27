@@ -1,9 +1,11 @@
+'use client';
+
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -25,20 +27,14 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
 const loginSchema = z.object({
-  email: z
-    .string()
-    .min(1, "Email is required"),
-  password: z
-    .string()
-    .min(1, "Password is required"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 const Login = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { login } = useAuth();
+  const router = useRouter();
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const form = useForm<LoginFormValues>({
@@ -53,13 +49,17 @@ const Login = () => {
 
   async function onSubmit(values: LoginFormValues) {
     setSubmitError(null);
-    const result = await login(values);
-    if (result.success) {
-      const from = (location.state as { from?: { pathname: string } })?.from?.pathname;
-      navigate(from && from !== "/login" ? from : "/", { replace: true });
+    const { error } = await supabase.auth.signInWithPassword({
+      email: values.email,
+      password: values.password,
+    });
+
+    if (error) {
+      setSubmitError(error.message);
       return;
     }
-    setSubmitError(result.error ?? "Login failed. Please try again.");
+
+    router.push("/");
   }
 
   return (
@@ -92,12 +92,12 @@ const Login = () => {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email or Username</FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input
-                        type="text"
-                        placeholder="Email or username"
-                        autoComplete="username"
+                        type="email"
+                        placeholder="email@example.com"
+                        autoComplete="email"
                         disabled={isSubmitting}
                         {...field}
                       />
@@ -136,7 +136,7 @@ const Login = () => {
           </Form>
 
           <p className="text-xs text-center text-muted-foreground">
-            Demo: any email and password
+            Sign in with your Supabase account.
           </p>
         </CardContent>
       </Card>

@@ -1,3 +1,5 @@
+'use client';
+
 import { Plus, Search, FileText, Link, Star, FileSpreadsheet } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import AddSourcesModal from "@/components/AddSourcesModal";
