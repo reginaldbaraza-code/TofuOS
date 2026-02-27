@@ -46,7 +46,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = React.useCallback(() => {
     const token = state.session?.token;
     if (token) logoutRequest(token);
-    clearSession();
     setState((prev) => ({ ...prev, session: null }));
   }, [state.session?.token]);
 

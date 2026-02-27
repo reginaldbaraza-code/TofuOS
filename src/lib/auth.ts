@@ -72,44 +72,30 @@ export function clearSession(): void {
 const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 
 /**
- * Login via backend. On success, session is persisted to localStorage.
+ * Login: simulates successful login with mock user.
  */
 export async function login(credentials: LoginCredentials): Promise<LoginResult> {
-  try {
-    const res = await fetch(`${API_BASE}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(credentials),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      return { success: false, error: data?.error ?? "Login failed" };
-    }
-    const session: Session = {
-      user: data.user,
-      token: data.token,
-      expiresAt: data.expiresAt,
-    };
-    persistSession(session);
-    return { success: true, session };
-  } catch (e) {
-    return {
-      success: false,
-      error: e instanceof Error ? e.message : "Network error. Is the server running?",
-    };
-  }
+  // Simulate API delay
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  // Accept any login for now
+  const session: Session = {
+    user: {
+      id: "mock-user-id",
+      email: credentials.email,
+      displayName: credentials.email.split("@")[0] || "User",
+    },
+    token: "mock-jwt-token",
+    expiresAt: Date.now() + 1000 * 60 * 60 * 24 * 7, // 7 days
+  };
+
+  persistSession(session);
+  return { success: true, session };
 }
 
 /**
- * Logout: invalidate token on server and clear local session.
+ * Logout: clear local session.
  */
-export async function logoutRequest(token: string): Promise<void> {
-  try {
-    await fetch(`${API_BASE}/auth/logout`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-  } catch {
-    // ignore
-  }
+export function logoutRequest(token: string): void {
+  clearSession();
 }
