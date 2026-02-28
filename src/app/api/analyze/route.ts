@@ -26,7 +26,8 @@ export async function POST(req: Request) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const modelName = process.env.GEMINI_MODEL || "gemini-2.0-flash-001";
+    const model = genAI.getGenerativeModel({ model: modelName });
 
     const prompt = `You are a product management assistant. Based on the following source identifiers (which represent customer interviews, reviews, and documents): ${sourceIds.join(', ')}.
     Generate 4 concise, actionable, and data-driven insights for a product team. 
