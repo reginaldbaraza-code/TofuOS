@@ -97,6 +97,8 @@ Open [http://localhost:3000](http://localhost:3000). Sign in with Supabase (e.g.
 
 ## Deploying to Vercel
 
+**Important:** Commit `package-lock.json` to the repo. Vercel is configured to run `npm ci`, which installs exactly from the lockfile so you get React 18 and Next.js 14 as intended.
+
 ### Step 1: Connect the repo
 
 - In [Vercel](https://vercel.com), create a new project (or use an existing one).
