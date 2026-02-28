@@ -1,7 +1,6 @@
 {
   "version": 3,
   "pages404": true,
-  "appType": "app",
   "caseSensitive": false,
   "basePath": "",
   "redirects": [
@@ -9,7 +8,6 @@
       "source": "/:path+/",
       "destination": "/:path+",
       "internal": true,
-      "priority": true,
       "statusCode": 308,
       "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
     }
@@ -29,34 +27,10 @@
       "namedRegex": "^/(?:/)?$"
     },
     {
-      "page": "/_global-error",
-      "regex": "^/_global\\-error(?:/)?$",
-      "routeKeys": {},
-      "namedRegex": "^/_global\\-error(?:/)?$"
-    },
-    {
       "page": "/_not-found",
       "regex": "^/_not\\-found(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/_not\\-found(?:/)?$"
-    },
-    {
-      "page": "/api/analyze",
-      "regex": "^/api/analyze(?:/)?$",
-      "routeKeys": {},
-      "namedRegex": "^/api/analyze(?:/)?$"
-    },
-    {
-      "page": "/api/chat",
-      "regex": "^/api/chat(?:/)?$",
-      "routeKeys": {},
-      "namedRegex": "^/api/chat(?:/)?$"
-    },
-    {
-      "page": "/api/jira/create-issue",
-      "regex": "^/api/jira/create\\-issue(?:/)?$",
-      "routeKeys": {},
-      "namedRegex": "^/api/jira/create\\-issue(?:/)?$"
     },
     {
       "page": "/login",
@@ -73,11 +47,10 @@
     "didPostponeHeader": "x-nextjs-postponed",
     "contentTypeHeader": "text/x-component",
     "suffix": ".rsc",
+    "prefetchSuffix": ".prefetch.rsc",
     "prefetchSegmentHeader": "next-router-segment-prefetch",
     "prefetchSegmentSuffix": ".segment.rsc",
-    "prefetchSegmentDirSuffix": ".segments",
-    "clientParamParsing": false,
-    "dynamicRSCPrerender": false
+    "prefetchSegmentDirSuffix": ".segments"
   },
   "rewriteHeaders": {
     "pathHeader": "x-nextjs-rewritten-path",

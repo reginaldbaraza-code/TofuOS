@@ -8,9 +8,9 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 // In production, these variables will be provided by Vercel.
 const isReady = !!supabaseUrl && !!supabaseAnonKey;
 
-export const supabase = isReady 
+export const supabase = isReady
   ? createClient(supabaseUrl, supabaseAnonKey)
-  : (null as any); 
+  : (null as ReturnType<typeof createClient> | null); 
 
 // Helper to ensure we don't call supabase if it's not initialized
 export const getSupabase = () => {
