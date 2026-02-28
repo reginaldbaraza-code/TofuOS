@@ -25,34 +25,45 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, CheckCircle } from "lucide-react";
 
-const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-});
+const signupSchema = z
+  .object({
+    email: z.string().email("Invalid email address"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
-type LoginFormValues = z.infer<typeof loginSchema>;
+type SignupFormValues = z.infer<typeof signupSchema>;
 
-const Login = () => {
+const Signup = () => {
   const router = useRouter();
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [emailSent, setEmailSent] = useState(false);
 
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
+  const form = useForm<SignupFormValues>({
+    resolver: zodResolver(signupSchema),
     defaultValues: {
       email: "",
       password: "",
+      confirmPassword: "",
     },
   });
 
   const isSubmitting = form.formState.isSubmitting;
 
-  async function onSubmit(values: LoginFormValues) {
+  async function onSubmit(values: SignupFormValues) {
     setSubmitError(null);
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signUp({
       email: values.email,
       password: values.password,
+      options: {
+        emailRedirectTo: typeof window !== "undefined" ? `${window.location.origin}/` : undefined,
+      },
     });
 
     if (error) {
@@ -60,7 +71,38 @@ const Login = () => {
       return;
     }
 
+    // Supabase may require email confirmation depending on project settings
+    if (data?.user && !data.session) {
+      setEmailSent(true);
+      return;
+    }
+
     router.push("/");
+  }
+
+  if (emailSent) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md border-border shadow-sm">
+          <CardHeader className="space-y-1 text-center">
+            <div className="mx-auto w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-2">
+              <CheckCircle className="h-6 w-6 text-primary" />
+            </div>
+            <CardTitle className="text-2xl font-semibold tracking-tight">
+              Check your email
+            </CardTitle>
+            <CardDescription>
+              We sent a confirmation link to <strong>{form.getValues("email")}</strong>. Click the link to verify your account, then sign in.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/login">Back to sign in</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -71,17 +113,17 @@ const Login = () => {
             <span className="text-primary-foreground font-bold text-sm">🧊</span>
           </div>
           <CardTitle className="text-2xl font-semibold tracking-tight">
-            Sign in to tofuOS
+            Create an account
           </CardTitle>
           <CardDescription>
-            Enter your credentials to access your workspace.
+            Enter your email and password to get started.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {submitError && (
             <Alert variant="destructive" className="text-left">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Login failed</AlertTitle>
+              <AlertTitle>Sign up failed</AlertTitle>
               <AlertDescription>{submitError}</AlertDescription>
             </Alert>
           )}
@@ -117,7 +159,26 @@ const Login = () => {
                       <Input
                         type="password"
                         placeholder="••••••••"
-                        autoComplete="current-password"
+                        autoComplete="new-password"
+                        disabled={isSubmitting}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm password</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="••••••••"
+                        autoComplete="new-password"
                         disabled={isSubmitting}
                         {...field}
                       />
@@ -131,15 +192,15 @@ const Login = () => {
                 className="w-full tofu-gradient text-primary-foreground hover:opacity-90"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Signing in…" : "Sign in"}
+                {isSubmitting ? "Creating account…" : "Create account"}
               </Button>
             </form>
           </Form>
 
           <p className="text-xs text-center text-muted-foreground">
-            Don&apos;t have an account?{" "}
-            <Link href="/signup" className="text-primary font-medium hover:underline">
-              Create one
+            Already have an account?{" "}
+            <Link href="/login" className="text-primary font-medium hover:underline">
+              Sign in
             </Link>
           </p>
         </CardContent>
@@ -148,4 +209,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Signup;
