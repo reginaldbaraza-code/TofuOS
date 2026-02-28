@@ -10,13 +10,14 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { createJiraIssue } from "@/lib/api";
 
 interface CreateJiraModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  insight: string;
+  insight: { summary: string; description: string } | null;
   initialProjectKey?: string;
   onCreated?: (url: string, projectKey: string) => void;
 }
@@ -28,8 +29,8 @@ export default function CreateJiraModal({
   initialProjectKey = "",
   onCreated,
 }: CreateJiraModalProps) {
-  const [summary, setSummary] = useState(insight);
-  const [description, setDescription] = useState(insight);
+  const [summary, setSummary] = useState(insight?.summary ?? "");
+  const [description, setDescription] = useState(insight?.description ?? "");
   const [projectKey, setProjectKey] = useState(initialProjectKey);
   const [issueType, setIssueType] = useState("Task");
   const [error, setError] = useState<string | null>(null);
@@ -38,16 +39,16 @@ export default function CreateJiraModal({
 
   useEffect(() => {
     if (open) {
-      setSummary(insight);
-      setDescription(insight);
+      setSummary(insight?.summary ?? "");
+      setDescription(insight?.description ?? "");
       setProjectKey(initialProjectKey);
       setCreatedUrl(null);
     }
   }, [open, insight, initialProjectKey]);
 
   const reset = () => {
-    setSummary(insight);
-    setDescription(insight);
+    setSummary(insight?.summary ?? "");
+    setDescription(insight?.description ?? "");
     setProjectKey("");
     setIssueType("Task");
     setError(null);
@@ -126,11 +127,13 @@ export default function CreateJiraModal({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="jira-description">Description (optional)</Label>
-                <Input
+                <Textarea
                   id="jira-description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Issue description"
+                  placeholder="Issue description — more detail is added when creating from an insight"
+                  rows={4}
+                  className="resize-y min-h-[80px]"
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">

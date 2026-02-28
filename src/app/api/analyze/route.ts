@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { createClient } from '@supabase/supabase-js';
 import { withGeminiRetry, QUOTA_EXCEEDED_MESSAGE } from "@/lib/gemini";
 
 export async function POST(req: Request) {
@@ -12,28 +13,47 @@ export async function POST(req: Request) {
 
     const apiKey = process.env.GOOGLE_GEMINI_API_KEY;
     
-    // Fallback to Mock Mode if no API key is provided
+    // Require API key - no mock data
     if (!apiKey) {
-      console.warn("GOOGLE_GEMINI_API_KEY not found. Using Mock Mode.");
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      return NextResponse.json({
-        insights: [
-          "73% of users report difficulties with feature prioritization in the current workflow.",
-          "The manual synthesis of customer interviews is currently taking an average of 12 hours per sprint.",
-          "Users are requesting a more direct connection between customer feedback and development planning.",
-          "Automated feedback categorization is the most requested 'efficiency' feature among power users."
-        ]
-      });
+      return NextResponse.json(
+        { message: "GOOGLE_GEMINI_API_KEY is not set. Add your Gemini API key to enable analysis." },
+        { status: 503 }
+      );
+    }
+
+    // Fetch real source details from Supabase for context
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    let sourceContext = `Source IDs: ${sourceIds.join(', ')}.`;
+
+    if (supabaseUrl && supabaseAnonKey) {
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+      const { data: sources } = await supabase
+        .from('sources')
+        .select('id, name, type, meta')
+        .in('id', sourceIds);
+      if (sources && sources.length > 0) {
+        sourceContext = sources.map((s) => {
+          const metaStr = s.meta ? ` (meta: ${JSON.stringify(s.meta)})` : '';
+          return `- ${s.name} [${s.type}]${metaStr}`;
+        }).join('\n');
+      }
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash";
     const model = genAI.getGenerativeModel({ model: modelName });
 
-    const prompt = `You are a product management assistant. Based on the following source identifiers (which represent customer interviews, reviews, and documents): ${sourceIds.join(', ')}.
-    Generate 4 concise, actionable, and data-driven insights for a product team. 
-    Return the response as a valid JSON object with a single key 'insights' containing an array of 4 strings.
-    Example: {"insights": ["Insight 1", "Insight 2", "Insight 3", "Insight 4"]}`;
+    const prompt = `You are a product management assistant. The user has selected the following real sources (customer interviews, reviews, documents):
+
+${sourceContext}
+
+Generate 4 insights based on these sources. For each insight provide:
+1. summary: one short sentence (concise, actionable, suitable as a ticket title).
+2. description: 1-3 sentences with more detail, data, or context (for use in ticket description).
+
+Return a valid JSON object with a single key 'insights' containing an array of 4 objects, each with keys "summary" and "description".
+Example: {"insights": [{"summary": "Short title", "description": "Longer detail here."}, ...]}`;
 
     const data = await withGeminiRetry(async () => {
       const result = await model.generateContent(prompt);

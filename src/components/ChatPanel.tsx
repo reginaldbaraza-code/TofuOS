@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Send, ThumbsUp, ThumbsDown, Copy, Pin, SlidersHorizontal, MoreVertical, Sparkles, ExternalLink } from "lucide-react";
 import { fetchSources, analyzeSources, getJiraConfig, chatWithAI } from "@/lib/api";
+import type { InsightItem } from "@/lib/api";
 import JiraConfigModal from "@/components/JiraConfigModal";
 import CreateJiraModal from "@/components/CreateJiraModal";
 
@@ -18,28 +19,38 @@ const suggestions = [
 ];
 
 const ChatPanel = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content:
-        "Based on the **47 customer interviews** and usage data, I've summarized the key insights:\n\n**Top Pain Points:**\n- 73% of users report difficulties with **feature prioritization**\n- Missing connection between **customer feedback** and **development planning**\n- Manual synthesis of interviews takes an average of **12 hours per sprint**\n\n**Recommended Next Steps:**\n1. Implement automatic feedback categorization\n2. Calculate impact score based on user frequency\n3. Direct integration with the development backlog",
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [insights, setInsights] = useState<string[]>([]);
+  const [insights, setInsights] = useState<InsightItem[]>([]);
   const [analyzing, setAnalyzing] = useState(false);
   const [analyzeError, setAnalyzeError] = useState<string | null>(null);
   const [jiraConfigured, setJiraConfigured] = useState(false);
   const [jiraConfigModalOpen, setJiraConfigModalOpen] = useState(false);
   const [createJiraModalOpen, setCreateJiraModalOpen] = useState(false);
-  const [createJiraInsight, setCreateJiraInsight] = useState("");
+  const [createJiraInsight, setCreateJiraInsight] = useState<{ summary: string; description: string } | null>(null);
   const [lastProjectKey, setLastProjectKey] = useState("");
+  const [selectedSourcesCount, setSelectedSourcesCount] = useState(0);
 
   useEffect(() => {
     getJiraConfig().then((c) => {
       setJiraConfigured(!!c?.configured);
       if (c?.lastProjectKey) setLastProjectKey(c.lastProjectKey);
     });
+  }, []);
+
+  useEffect(() => {
+    fetchSources().then((list) => {
+      setSelectedSourcesCount(list.filter((s) => s.selected).length);
+    }).catch(() => setSelectedSourcesCount(0));
+  }, [insights]);
+
+  const refreshSourceCount = () => {
+    fetchSources().then((list) => setSelectedSourcesCount(list.filter((s) => s.selected).length)).catch(() => {});
+  };
+
+  useEffect(() => {
+    window.addEventListener("focus", refreshSourceCount);
+    return () => window.removeEventListener("focus", refreshSourceCount);
   }, []);
 
   const handleAnalyze = async () => {
@@ -54,6 +65,7 @@ const ChatPanel = () => {
       }
       const { insights: list } = await analyzeSources(selectedIds);
       setInsights(list || []);
+      setSelectedSourcesCount(selectedIds.length);
     } catch (e) {
       setAnalyzeError(e instanceof Error ? e.message : "Analysis failed");
       setInsights([]);
@@ -62,12 +74,13 @@ const ChatPanel = () => {
     }
   };
 
-  const handleCreateJiraClick = (insight: string) => {
+  const handleCreateJiraClick = (insight: InsightItem) => {
+    const payload = { summary: insight.summary, description: insight.description };
     if (!jiraConfigured) {
       setJiraConfigModalOpen(true);
-      setCreateJiraInsight(insight);
+      setCreateJiraInsight(payload);
     } else {
-      setCreateJiraInsight(insight);
+      setCreateJiraInsight(payload);
       setCreateJiraModalOpen(true);
     }
   };
@@ -109,9 +122,10 @@ const ChatPanel = () => {
         { role: "assistant", content: response.content }
       ]);
     } catch (e) {
+      const errMsg = e instanceof Error ? e.message : "Sorry, I encountered an error. Please check your connection and Gemini API key.";
       setMessages([
         ...newMessages,
-        { role: "assistant", content: "Sorry, I encountered an error. Please check your connection and Gemini API key." }
+        { role: "assistant", content: errMsg }
       ]);
     }
   };
@@ -160,7 +174,7 @@ const ChatPanel = () => {
                 key={i}
                 className="flex items-start gap-2 text-sm text-foreground bg-background border border-border rounded-lg px-3 py-2"
               >
-                <span className="flex-1 min-w-0">{insight}</span>
+                <span className="flex-1 min-w-0">{insight.summary}</span>
                 <button
                   type="button"
                   onClick={() => handleCreateJiraClick(insight)}
@@ -240,7 +254,7 @@ const ChatPanel = () => {
             className="flex-1 bg-transparent text-sm outline-none text-foreground placeholder:text-muted-foreground"
           />
           <span className="text-xs text-muted-foreground whitespace-nowrap">
-            3 Sources
+            {selectedSourcesCount} Source{selectedSourcesCount !== 1 ? "s" : ""}
           </span>
           <button
             onClick={handleSend}

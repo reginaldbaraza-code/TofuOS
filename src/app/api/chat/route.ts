@@ -13,11 +13,12 @@ export async function POST(req: Request) {
 
     const apiKey = process.env.GOOGLE_GEMINI_API_KEY;
     
-    // Fallback to Mock Mode if no API key is provided
+    // Require API key - no mock data
     if (!apiKey) {
-      return NextResponse.json({ 
-        content: "I'm currently in Mock Mode because no Gemini API key was found. Once you add your key, I'll be able to analyze your sources in real-time!" 
-      });
+      return NextResponse.json(
+        { message: "GOOGLE_GEMINI_API_KEY is not set. Add your Gemini API key to enable chat." },
+        { status: 503 }
+      );
     }
 
     // Fetch source details from Supabase for context

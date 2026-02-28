@@ -83,7 +83,12 @@ export async function addDocumentSources(files: File[]): Promise<Source[]> {
 }
 
 // --- Analyze (AI PM insights) ---
-export async function analyzeSources(sourceIds: string[]): Promise<{ insights: string[] }> {
+export interface InsightItem {
+  summary: string;
+  description: string;
+}
+
+export async function analyzeSources(sourceIds: string[]): Promise<{ insights: InsightItem[] }> {
   const response = await fetch('/api/analyze', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -113,6 +118,25 @@ export async function chatWithAI(
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.message || 'Chat failed');
+  }
+
+  return response.json();
+}
+
+// --- Studio (document generation) ---
+export async function generateStudioDocument(
+  documentType: string,
+  sourceIds: string[]
+): Promise<{ content: string }> {
+  const response = await fetch('/api/studio/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ documentType, sourceIds }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Document generation failed');
   }
 
   return response.json();
