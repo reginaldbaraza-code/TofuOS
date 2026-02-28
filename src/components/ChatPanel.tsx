@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Send, ThumbsUp, ThumbsDown, Copy, Pin, SlidersHorizontal, MoreVertical, Sparkles, ExternalLink } from "lucide-react";
-import { fetchSources, analyzeSources, getJiraConfig } from "@/lib/api";
+import { fetchSources, analyzeSources, getJiraConfig, chatWithAI } from "@/lib/api";
 import JiraConfigModal from "@/components/JiraConfigModal";
 import CreateJiraModal from "@/components/CreateJiraModal";
 
@@ -82,17 +82,38 @@ const ChatPanel = () => {
     }
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
-    setMessages((prev) => [
-      ...prev,
-      { role: "user", content: input },
-      {
-        role: "assistant",
-        content: "I'm analyzing your request and creating a detailed proposal based on the available sources...",
-      },
-    ]);
+    
+    const userMessage = input;
     setInput("");
+    
+    const newMessages: Message[] = [
+      ...messages,
+      { role: "user", content: userMessage }
+    ];
+    
+    setMessages([
+      ...newMessages,
+      { role: "assistant", content: "Thinking..." }
+    ]);
+
+    try {
+      const sources = await fetchSources();
+      const selectedIds = sources.filter((s) => s.selected).map((s) => s.id);
+      
+      const response = await chatWithAI(userMessage, selectedIds, messages);
+      
+      setMessages([
+        ...newMessages,
+        { role: "assistant", content: response.content }
+      ]);
+    } catch (e) {
+      setMessages([
+        ...newMessages,
+        { role: "assistant", content: "Sorry, I encountered an error. Please check your connection and Gemini API key." }
+      ]);
+    }
   };
 
   const renderContent = (text: string) => {

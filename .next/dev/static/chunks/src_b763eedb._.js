@@ -1283,6 +1283,8 @@ __turbopack_context__.s([
     ()=>addReviewsSource,
     "analyzeSources",
     ()=>analyzeSources,
+    "chatWithAI",
+    ()=>chatWithAI,
     "createJiraIssue",
     ()=>createJiraIssue,
     "fetchSources",
@@ -1361,6 +1363,24 @@ async function analyzeSources(sourceIds) {
     if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'Analysis failed');
+    }
+    return response.json();
+}
+async function chatWithAI(message, sourceIds, history) {
+    const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            message,
+            sourceIds,
+            history
+        })
+    });
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Chat failed');
     }
     return response.json();
 }
@@ -2485,20 +2505,44 @@ const ChatPanel = ()=>{
             setCreateJiraModalOpen(true);
         }
     };
-    const handleSend = ()=>{
+    const handleSend = async ()=>{
         if (!input.trim()) return;
-        setMessages((prev)=>[
-                ...prev,
-                {
-                    role: "user",
-                    content: input
-                },
+        const userMessage = input;
+        setInput("");
+        const newMessages = [
+            ...messages,
+            {
+                role: "user",
+                content: userMessage
+            }
+        ];
+        setMessages([
+            ...newMessages,
+            {
+                role: "assistant",
+                content: "Thinking..."
+            }
+        ]);
+        try {
+            const sources = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$api$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["fetchSources"])();
+            const selectedIds = sources.filter((s)=>s.selected).map((s)=>s.id);
+            const response = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$api$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["chatWithAI"])(userMessage, selectedIds, messages);
+            setMessages([
+                ...newMessages,
                 {
                     role: "assistant",
-                    content: "I'm analyzing your request and creating a detailed proposal based on the available sources..."
+                    content: response.content
                 }
             ]);
-        setInput("");
+        } catch (e) {
+            setMessages([
+                ...newMessages,
+                {
+                    role: "assistant",
+                    content: "Sorry, I encountered an error. Please check your connection and Gemini API key."
+                }
+            ]);
+        }
     };
     const renderContent = (text)=>{
         // Simple bold markdown rendering
@@ -2510,7 +2554,7 @@ const ChatPanel = ()=>{
                     children: part.slice(2, -2)
                 }, i, false, {
                     fileName: "[project]/src/components/ChatPanel.tsx",
-                    lineNumber: 103,
+                    lineNumber: 124,
                     columnNumber: 16
                 }, ("TURBOPACK compile-time value", void 0));
             }
@@ -2518,7 +2562,7 @@ const ChatPanel = ()=>{
                 children: part
             }, i, false, {
                 fileName: "[project]/src/components/ChatPanel.tsx",
-                lineNumber: 105,
+                lineNumber: 126,
                 columnNumber: 14
             }, ("TURBOPACK compile-time value", void 0));
         });
@@ -2534,7 +2578,7 @@ const ChatPanel = ()=>{
                         children: "Chat"
                     }, void 0, false, {
                         fileName: "[project]/src/components/ChatPanel.tsx",
-                        lineNumber: 113,
+                        lineNumber: 134,
                         columnNumber: 9
                     }, ("TURBOPACK compile-time value", void 0)),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2549,14 +2593,14 @@ const ChatPanel = ()=>{
                                         className: "w-4 h-4"
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/ChatPanel.tsx",
-                                        lineNumber: 120,
+                                        lineNumber: 141,
                                         columnNumber: 13
                                     }, ("TURBOPACK compile-time value", void 0)),
                                     analyzing ? "Analyzing…" : "Analyze sources"
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/components/ChatPanel.tsx",
-                                lineNumber: 115,
+                                lineNumber: 136,
                                 columnNumber: 11
                             }, ("TURBOPACK compile-time value", void 0)),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -2565,12 +2609,12 @@ const ChatPanel = ()=>{
                                     className: "w-4 h-4 text-muted-foreground"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/ChatPanel.tsx",
-                                    lineNumber: 124,
+                                    lineNumber: 145,
                                     columnNumber: 13
                                 }, ("TURBOPACK compile-time value", void 0))
                             }, void 0, false, {
                                 fileName: "[project]/src/components/ChatPanel.tsx",
-                                lineNumber: 123,
+                                lineNumber: 144,
                                 columnNumber: 11
                             }, ("TURBOPACK compile-time value", void 0)),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -2579,24 +2623,24 @@ const ChatPanel = ()=>{
                                     className: "w-4 h-4 text-muted-foreground"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/ChatPanel.tsx",
-                                    lineNumber: 127,
+                                    lineNumber: 148,
                                     columnNumber: 13
                                 }, ("TURBOPACK compile-time value", void 0))
                             }, void 0, false, {
                                 fileName: "[project]/src/components/ChatPanel.tsx",
-                                lineNumber: 126,
+                                lineNumber: 147,
                                 columnNumber: 11
                             }, ("TURBOPACK compile-time value", void 0))
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/ChatPanel.tsx",
-                        lineNumber: 114,
+                        lineNumber: 135,
                         columnNumber: 9
                     }, ("TURBOPACK compile-time value", void 0))
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/ChatPanel.tsx",
-                lineNumber: 112,
+                lineNumber: 133,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             insights.length > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2607,7 +2651,7 @@ const ChatPanel = ()=>{
                         children: "Insights (project manager)"
                     }, void 0, false, {
                         fileName: "[project]/src/components/ChatPanel.tsx",
-                        lineNumber: 135,
+                        lineNumber: 156,
                         columnNumber: 11
                     }, ("TURBOPACK compile-time value", void 0)),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("ul", {
@@ -2620,7 +2664,7 @@ const ChatPanel = ()=>{
                                         children: insight
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/ChatPanel.tsx",
-                                        lineNumber: 142,
+                                        lineNumber: 163,
                                         columnNumber: 17
                                     }, ("TURBOPACK compile-time value", void 0)),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -2632,31 +2676,31 @@ const ChatPanel = ()=>{
                                                 className: "w-3.5 h-3.5"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/ChatPanel.tsx",
-                                                lineNumber: 148,
+                                                lineNumber: 169,
                                                 columnNumber: 19
                                             }, ("TURBOPACK compile-time value", void 0)),
                                             "Create Jira ticket"
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/components/ChatPanel.tsx",
-                                        lineNumber: 143,
+                                        lineNumber: 164,
                                         columnNumber: 17
                                     }, ("TURBOPACK compile-time value", void 0))
                                 ]
                             }, i, true, {
                                 fileName: "[project]/src/components/ChatPanel.tsx",
-                                lineNumber: 138,
+                                lineNumber: 159,
                                 columnNumber: 15
                             }, ("TURBOPACK compile-time value", void 0)))
                     }, void 0, false, {
                         fileName: "[project]/src/components/ChatPanel.tsx",
-                        lineNumber: 136,
+                        lineNumber: 157,
                         columnNumber: 11
                     }, ("TURBOPACK compile-time value", void 0))
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/ChatPanel.tsx",
-                lineNumber: 134,
+                lineNumber: 155,
                 columnNumber: 9
             }, ("TURBOPACK compile-time value", void 0)),
             analyzeError && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2664,7 +2708,7 @@ const ChatPanel = ()=>{
                 children: analyzeError
             }, void 0, false, {
                 fileName: "[project]/src/components/ChatPanel.tsx",
-                lineNumber: 157,
+                lineNumber: 178,
                 columnNumber: 9
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2679,7 +2723,7 @@ const ChatPanel = ()=>{
                                         children: renderContent(msg.content)
                                     }, void 0, false, {
                                         fileName: "[project]/src/components/ChatPanel.tsx",
-                                        lineNumber: 166,
+                                        lineNumber: 187,
                                         columnNumber: 17
                                     }, ("TURBOPACK compile-time value", void 0)),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2692,12 +2736,12 @@ const ChatPanel = ()=>{
                                                     className: "w-3.5 h-3.5 text-muted-foreground"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/components/ChatPanel.tsx",
-                                                    lineNumber: 171,
+                                                    lineNumber: 192,
                                                     columnNumber: 21
                                                 }, ("TURBOPACK compile-time value", void 0))
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/ChatPanel.tsx",
-                                                lineNumber: 170,
+                                                lineNumber: 191,
                                                 columnNumber: 19
                                             }, ("TURBOPACK compile-time value", void 0)),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -2707,12 +2751,12 @@ const ChatPanel = ()=>{
                                                     className: "w-3.5 h-3.5 text-muted-foreground"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/components/ChatPanel.tsx",
-                                                    lineNumber: 174,
+                                                    lineNumber: 195,
                                                     columnNumber: 21
                                                 }, ("TURBOPACK compile-time value", void 0))
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/ChatPanel.tsx",
-                                                lineNumber: 173,
+                                                lineNumber: 194,
                                                 columnNumber: 19
                                             }, ("TURBOPACK compile-time value", void 0)),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -2721,12 +2765,12 @@ const ChatPanel = ()=>{
                                                     className: "w-3.5 h-3.5 text-muted-foreground"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/components/ChatPanel.tsx",
-                                                    lineNumber: 177,
+                                                    lineNumber: 198,
                                                     columnNumber: 21
                                                 }, ("TURBOPACK compile-time value", void 0))
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/ChatPanel.tsx",
-                                                lineNumber: 176,
+                                                lineNumber: 197,
                                                 columnNumber: 19
                                             }, ("TURBOPACK compile-time value", void 0)),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -2735,24 +2779,24 @@ const ChatPanel = ()=>{
                                                     className: "w-3.5 h-3.5 text-muted-foreground"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/components/ChatPanel.tsx",
-                                                    lineNumber: 180,
+                                                    lineNumber: 201,
                                                     columnNumber: 21
                                                 }, ("TURBOPACK compile-time value", void 0))
                                             }, void 0, false, {
                                                 fileName: "[project]/src/components/ChatPanel.tsx",
-                                                lineNumber: 179,
+                                                lineNumber: 200,
                                                 columnNumber: 19
                                             }, ("TURBOPACK compile-time value", void 0))
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/components/ChatPanel.tsx",
-                                        lineNumber: 169,
+                                        lineNumber: 190,
                                         columnNumber: 17
                                     }, ("TURBOPACK compile-time value", void 0))
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/components/ChatPanel.tsx",
-                                lineNumber: 165,
+                                lineNumber: 186,
                                 columnNumber: 15
                             }, ("TURBOPACK compile-time value", void 0)) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                 className: "flex justify-end",
@@ -2761,17 +2805,17 @@ const ChatPanel = ()=>{
                                     children: msg.content
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/ChatPanel.tsx",
-                                    lineNumber: 186,
+                                    lineNumber: 207,
                                     columnNumber: 17
                                 }, ("TURBOPACK compile-time value", void 0))
                             }, void 0, false, {
                                 fileName: "[project]/src/components/ChatPanel.tsx",
-                                lineNumber: 185,
+                                lineNumber: 206,
                                 columnNumber: 15
                             }, ("TURBOPACK compile-time value", void 0))
                         }, i, false, {
                             fileName: "[project]/src/components/ChatPanel.tsx",
-                            lineNumber: 163,
+                            lineNumber: 184,
                             columnNumber: 11
                         }, ("TURBOPACK compile-time value", void 0))),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2784,18 +2828,18 @@ const ChatPanel = ()=>{
                                 children: s
                             }, i, false, {
                                 fileName: "[project]/src/components/ChatPanel.tsx",
-                                lineNumber: 197,
+                                lineNumber: 218,
                                 columnNumber: 13
                             }, ("TURBOPACK compile-time value", void 0)))
                     }, void 0, false, {
                         fileName: "[project]/src/components/ChatPanel.tsx",
-                        lineNumber: 195,
+                        lineNumber: 216,
                         columnNumber: 9
                     }, ("TURBOPACK compile-time value", void 0))
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/ChatPanel.tsx",
-                lineNumber: 161,
+                lineNumber: 182,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2813,7 +2857,7 @@ const ChatPanel = ()=>{
                                 className: "flex-1 bg-transparent text-sm outline-none text-foreground placeholder:text-muted-foreground"
                             }, void 0, false, {
                                 fileName: "[project]/src/components/ChatPanel.tsx",
-                                lineNumber: 213,
+                                lineNumber: 234,
                                 columnNumber: 11
                             }, ("TURBOPACK compile-time value", void 0)),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -2821,7 +2865,7 @@ const ChatPanel = ()=>{
                                 children: "3 Sources"
                             }, void 0, false, {
                                 fileName: "[project]/src/components/ChatPanel.tsx",
-                                lineNumber: 221,
+                                lineNumber: 242,
                                 columnNumber: 11
                             }, ("TURBOPACK compile-time value", void 0)),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -2831,18 +2875,18 @@ const ChatPanel = ()=>{
                                     className: "w-4 h-4"
                                 }, void 0, false, {
                                     fileName: "[project]/src/components/ChatPanel.tsx",
-                                    lineNumber: 228,
+                                    lineNumber: 249,
                                     columnNumber: 13
                                 }, ("TURBOPACK compile-time value", void 0))
                             }, void 0, false, {
                                 fileName: "[project]/src/components/ChatPanel.tsx",
-                                lineNumber: 224,
+                                lineNumber: 245,
                                 columnNumber: 11
                             }, ("TURBOPACK compile-time value", void 0))
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/ChatPanel.tsx",
-                        lineNumber: 212,
+                        lineNumber: 233,
                         columnNumber: 9
                     }, ("TURBOPACK compile-time value", void 0)),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2850,13 +2894,13 @@ const ChatPanel = ()=>{
                         children: "tofuOS can make mistakes. Please verify the responses."
                     }, void 0, false, {
                         fileName: "[project]/src/components/ChatPanel.tsx",
-                        lineNumber: 231,
+                        lineNumber: 252,
                         columnNumber: 9
                     }, ("TURBOPACK compile-time value", void 0))
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/ChatPanel.tsx",
-                lineNumber: 211,
+                lineNumber: 232,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$JiraConfigModal$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
@@ -2865,7 +2909,7 @@ const ChatPanel = ()=>{
                 onSaved: handleJiraConfigSaved
             }, void 0, false, {
                 fileName: "[project]/src/components/ChatPanel.tsx",
-                lineNumber: 236,
+                lineNumber: 257,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$CreateJiraModal$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
@@ -2878,13 +2922,13 @@ const ChatPanel = ()=>{
                 }
             }, void 0, false, {
                 fileName: "[project]/src/components/ChatPanel.tsx",
-                lineNumber: 241,
+                lineNumber: 262,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0))
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/ChatPanel.tsx",
-        lineNumber: 110,
+        lineNumber: 131,
         columnNumber: 5
     }, ("TURBOPACK compile-time value", void 0));
 };

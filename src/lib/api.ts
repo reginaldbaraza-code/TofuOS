@@ -98,6 +98,26 @@ export async function analyzeSources(sourceIds: string[]): Promise<{ insights: s
   return response.json();
 }
 
+// --- Conversational Chat with AI ---
+export async function chatWithAI(
+  message: string, 
+  sourceIds: string[], 
+  history: { role: "user" | "assistant"; content: string }[]
+): Promise<{ content: string }> {
+  const response = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, sourceIds, history }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Chat failed');
+  }
+
+  return response.json();
+}
+
 // --- Jira ---
 export interface JiraConfig {
   configured: boolean;

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export async function POST(req: Request) {
   try {
@@ -8,20 +9,41 @@ export async function POST(req: Request) {
       return NextResponse.json({ insights: [] });
     }
 
-    // --- MOCK MODE ---
-    // Simulating AI processing delay
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    const apiKey = process.env.GOOGLE_GEMINI_API_KEY;
+    
+    // Fallback to Mock Mode if no API key is provided
+    if (!apiKey) {
+      console.warn("GOOGLE_GEMINI_API_KEY not found. Using Mock Mode.");
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      return NextResponse.json({
+        insights: [
+          "73% of users report difficulties with feature prioritization in the current workflow.",
+          "The manual synthesis of customer interviews is currently taking an average of 12 hours per sprint.",
+          "Users are requesting a more direct connection between customer feedback and development planning.",
+          "Automated feedback categorization is the most requested 'efficiency' feature among power users."
+        ]
+      });
+    }
 
-    const mockInsights = [
-      "73% of users report difficulties with feature prioritization in the current workflow.",
-      "The manual synthesis of customer interviews is currently taking an average of 12 hours per sprint.",
-      "Users are requesting a more direct connection between customer feedback and development planning.",
-      "Automated feedback categorization is the most requested 'efficiency' feature among power users."
-    ];
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    return NextResponse.json({ insights: mockInsights });
+    const prompt = `You are a product management assistant. Based on the following source identifiers (which represent customer interviews, reviews, and documents): ${sourceIds.join(', ')}.
+    Generate 4 concise, actionable, and data-driven insights for a product team. 
+    Return the response as a valid JSON object with a single key 'insights' containing an array of 4 strings.
+    Example: {"insights": ["Insight 1", "Insight 2", "Insight 3", "Insight 4"]}`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+    
+    // Clean the response text in case Gemini adds markdown code blocks
+    const cleanedText = text.replace(/```json|```/g, "").trim();
+    const data = JSON.parse(cleanedText);
+
+    return NextResponse.json(data);
   } catch (error: any) {
-    console.error('AI Analysis Error:', error);
+    console.error('Gemini Analysis Error:', error);
     return NextResponse.json({ message: error.message }, { status: 500 });
   }
 }
