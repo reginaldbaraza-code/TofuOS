@@ -172,7 +172,9 @@ Add these for **Production** (and optionally Preview/Development). Never commit 
   Add the exact app URL (and preview URL if needed) to Supabase → Authentication → URL Configuration → Redirect URLs.
 
 - **AI analysis or chat doesn’t work**  
-  Ensure the correct API key is set in `.env.local` (local) or in Vercel Environment Variables (deployed), and that the variable name matches what the API route expects.
+  Ensure the correct API key is set in `.env.local` (local) or in Vercel Environment Variables (deployed), and that the variable name matches what the API route expects. The app defaults to **gemini-2.5-flash**, which has free-tier quota; if you get a 404, set `GEMINI_MODEL` to a model from [Gemini API models](https://ai.google.dev/gemini-api/docs/models).
+- **“Rate limit” or “quota exceeded” (429)**  
+  The Gemini free tier has limited requests per minute and per day. Wait a few minutes and try again, or check [Gemini API rate limits](https://ai.google.dev/gemini-api/docs/rate-limits) and your [usage](https://ai.dev/rate-limit). For higher limits, enable billing in Google AI Studio.
 
 - **Jira ticket creation fails**  
   Configure Jira in the app (domain, email, API token). For Jira Cloud, create an API token at [Atlassian API tokens](https://id.atlassian.com/manage-profile/security/api-tokens). The app stores config in Supabase per user.

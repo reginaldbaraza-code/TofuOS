@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from '@supabase/supabase-js';
+import { withGeminiRetry, QUOTA_EXCEEDED_MESSAGE } from "@/lib/gemini";
 
 export async function POST(req: Request) {
   try {
@@ -38,11 +39,11 @@ export async function POST(req: Request) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const modelName = process.env.GEMINI_MODEL || "gemini-2.0-flash-001";
+    const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash";
     const model = genAI.getGenerativeModel({ model: modelName });
 
     const chat = model.startChat({
-      history: history.map((h: any) => ({
+      history: (history || []).map((h: { role: string; content: string }) => ({
         role: h.role === "assistant" ? "model" : "user",
         parts: [{ text: h.content }],
       })),
@@ -52,12 +53,21 @@ export async function POST(req: Request) {
     });
 
     const fullPrompt = `Context:\n${context}\n\nUser Question: ${message}`;
-    const result = await chat.sendMessage(fullPrompt);
-    const response = await result.response;
+
+    const content = await withGeminiRetry(async () => {
+      const result = await chat.sendMessage(fullPrompt);
+      const response = await result.response;
+      return response.text();
+    });
     
-    return NextResponse.json({ content: response.text() });
-  } catch (error: any) {
+    return NextResponse.json({ content });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    const isQuota = message.includes("429") || message.includes("quota") || message.includes("Too Many Requests") || message.includes("Quota exceeded");
     console.error('Gemini Chat Error:', error);
-    return NextResponse.json({ message: error.message }, { status: 500 });
+    if (isQuota) {
+      return NextResponse.json({ message: QUOTA_EXCEEDED_MESSAGE }, { status: 429 });
+    }
+    return NextResponse.json({ message }, { status: 500 });
   }
 }

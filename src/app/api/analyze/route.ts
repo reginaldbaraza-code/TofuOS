@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { withGeminiRetry, QUOTA_EXCEEDED_MESSAGE } from "@/lib/gemini";
 
 export async function POST(req: Request) {
   try {
@@ -26,7 +27,7 @@ export async function POST(req: Request) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const modelName = process.env.GEMINI_MODEL || "gemini-2.0-flash-001";
+    const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash";
     const model = genAI.getGenerativeModel({ model: modelName });
 
     const prompt = `You are a product management assistant. Based on the following source identifiers (which represent customer interviews, reviews, and documents): ${sourceIds.join(', ')}.
@@ -34,17 +35,22 @@ export async function POST(req: Request) {
     Return the response as a valid JSON object with a single key 'insights' containing an array of 4 strings.
     Example: {"insights": ["Insight 1", "Insight 2", "Insight 3", "Insight 4"]}`;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-    
-    // Clean the response text in case Gemini adds markdown code blocks
-    const cleanedText = text.replace(/```json|```/g, "").trim();
-    const data = JSON.parse(cleanedText);
+    const data = await withGeminiRetry(async () => {
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      const cleanedText = text.replace(/```json|```/g, "").trim();
+      return JSON.parse(cleanedText);
+    });
 
     return NextResponse.json(data);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    const isQuota = message.includes("429") || message.includes("quota") || message.includes("Too Many Requests") || message.includes("Quota exceeded");
     console.error('Gemini Analysis Error:', error);
-    return NextResponse.json({ message: error.message }, { status: 500 });
+    if (isQuota) {
+      return NextResponse.json({ message: QUOTA_EXCEEDED_MESSAGE }, { status: 429 });
+    }
+    return NextResponse.json({ message }, { status: 500 });
   }
 }
