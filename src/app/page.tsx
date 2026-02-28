@@ -1,3 +1,5 @@
+'use client';
+
 import Index from '@/pages/Index';
 import ProtectedRoute from '@/components/ProtectedRoute';
 

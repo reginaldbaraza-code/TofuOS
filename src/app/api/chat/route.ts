@@ -20,12 +20,13 @@ export async function POST(req: Request) {
     }
 
     // Fetch source details from Supabase for context
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
     let context = "No specific sources selected.";
-    if (sourceIds && sourceIds.length > 0) {
+
+    if (supabaseUrl && supabaseAnonKey && sourceIds && sourceIds.length > 0) {
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
       const { data: sources } = await supabase
         .from('sources')
         .select('name, type, meta')
