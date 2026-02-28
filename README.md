@@ -79,7 +79,8 @@ Open [http://localhost:3000](http://localhost:3000) to see it in action!
 
 To ensure **Sign In** and all features work correctly on Vercel, follow these steps:
 
-1.  **Add Environment Variables**: In your Vercel Dashboard, go to **Settings -> Environment Variables** and add:
+1.  **Dependency Conflict Fix**: I have added a `.npmrc` file to the project. This tells Vercel to ignore a common "Peer Dependency" conflict between React 19 and older packages like `next-themes`.
+2.  **Add Environment Variables**: In your Vercel Dashboard, go to **Settings -> Environment Variables** and add:
     - `NEXT_PUBLIC_SUPABASE_URL`
     - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
     - `OPENAI_API_KEY`
