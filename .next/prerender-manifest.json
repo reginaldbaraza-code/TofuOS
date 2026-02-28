@@ -26,30 +26,6 @@
         "x-next-revalidate-tag-token"
       ]
     },
-    "/login": {
-      "experimentalBypassFor": [
-        {
-          "type": "header",
-          "key": "next-action"
-        },
-        {
-          "type": "header",
-          "key": "content-type",
-          "value": "multipart/form-data;.*"
-        }
-      ],
-      "initialRevalidateSeconds": false,
-      "srcRoute": "/login",
-      "dataRoute": "/login.rsc",
-      "allowHeader": [
-        "host",
-        "x-matched-path",
-        "x-prerender-revalidate",
-        "x-prerender-revalidate-if-generated",
-        "x-next-revalidated-tags",
-        "x-next-revalidate-tag-token"
-      ]
-    },
     "/": {
       "experimentalBypassFor": [
         {
@@ -73,13 +49,37 @@
         "x-next-revalidated-tags",
         "x-next-revalidate-tag-token"
       ]
+    },
+    "/login": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/login",
+      "dataRoute": "/login.rsc",
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
     }
   },
   "dynamicRoutes": {},
   "notFoundRoutes": [],
   "preview": {
-    "previewModeId": "fa3c12961b24cc5a4ffa589b75a1d8b1",
-    "previewModeSigningKey": "60b1aa4d4f811dbbb9fc080fe4362bea99eba74b31bad049e6f86930179388cf",
-    "previewModeEncryptionKey": "1eb3bd71a7471451e1071fd9b763391ba5c7c536e4dd315767988f8eced344a2"
+    "previewModeId": "3b749431c0225b3e6229918abc08e80d",
+    "previewModeSigningKey": "3ac2f62a2a07d4628dfa3483f6dacfa217ce10f1df38d89885e296b303291f6f",
+    "previewModeEncryptionKey": "868b31cb31ad2131c206f9d9ec1889af530edd72e95de5af122ea5410b826927"
   }
 }
