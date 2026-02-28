@@ -1,1 +1,0 @@
-self.__REACT_LOADABLE_MANIFEST='{"components/JiraConfigModal.tsx -> @/lib/api":{"id":960,"files":[]}}';
