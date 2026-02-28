@@ -1,8 +1,8 @@
 {
-  "/api/analyze/route": "/api/analyze",
-  "/api/jira/create-issue/route": "/api/jira/create-issue",
-  "/api/chat/route": "/api/chat",
   "/_not-found/page": "/_not-found",
+  "/api/analyze/route": "/api/analyze",
+  "/api/chat/route": "/api/chat",
+  "/api/jira/create-issue/route": "/api/jira/create-issue",
   "/login/page": "/login",
   "/page": "/"
 }
