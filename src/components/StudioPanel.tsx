@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from "react";
+import { jsPDF } from "jspdf";
 import {
   FileText,
   Code,
@@ -99,13 +100,25 @@ const StudioPanel = ({ mobile }: { mobile?: boolean }) => {
   const handleDownload = () => {
     if (!output) return;
     const label = studioItems.find((i) => i.id === activeItem)?.label ?? "document";
-    const blob = new Blob([output], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${label.replace(/\s+/g, "-")}.md`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const filename = `${label.replace(/\s+/g, "-")}.pdf`;
+    const doc = new jsPDF({ format: "a4", unit: "mm" });
+    const margin = 20;
+    const pageWidth = doc.getPageWidth();
+    const maxWidth = pageWidth - margin * 2;
+    let y = margin;
+    const lineHeight = 6;
+    const fontSize = 10;
+    doc.setFontSize(fontSize);
+    const lines = doc.splitTextToSize(output, maxWidth);
+    for (const line of lines) {
+      if (y > doc.getPageHeight() - margin) {
+        doc.addPage();
+        y = margin;
+      }
+      doc.text(line, margin, y);
+      y += lineHeight;
+    }
+    doc.save(filename);
   };
 
   return (
@@ -168,7 +181,7 @@ const StudioPanel = ({ mobile }: { mobile?: boolean }) => {
                   type="button"
                   onClick={handleDownload}
                   className="p-1.5 rounded hover:bg-muted transition-colors flex items-center gap-1.5"
-                  title="Download as Markdown (.md)"
+                  title="Download as PDF"
                 >
                   <Download className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                   <span className="text-xs text-muted-foreground">Download</span>

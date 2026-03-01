@@ -296,9 +296,9 @@ export async function getJiraConfig(): Promise<JiraConfig | null> {
 
   if (!data) return { configured: false };
 
-  return { 
-    ...data, 
-    configured: true, 
+  return {
+    ...data,
+    configured: true,
     hasToken: !!data.api_token,
     lastProjectKey: data.last_project_key
   };
