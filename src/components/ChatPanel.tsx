@@ -330,6 +330,7 @@ const ChatPanel = () => {
         onSaved={handleJiraConfigSaved}
       />
       <CreateJiraModal
+        key={createJiraModalOpen && createJiraInsight ? `jira-${createJiraInsight.summary}` : "jira-closed"}
         open={createJiraModalOpen}
         onOpenChange={setCreateJiraModalOpen}
         insight={createJiraInsight}

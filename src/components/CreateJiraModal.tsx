@@ -62,24 +62,28 @@ export default function CreateJiraModal({
 
   const handleCreate = async () => {
     setError(null);
-    if (!summary.trim()) {
+    // Use current state, falling back to insight prop in case effect hasn't run yet (avoids needing two clicks)
+    const summaryVal = summary.trim() || insight?.summary?.trim() || "";
+    const descriptionVal = description.trim() || insight?.description?.trim() || summaryVal || "";
+    const projectVal = projectKey.trim();
+    if (!summaryVal) {
       setError("Summary is required.");
       return;
     }
-    if (!projectKey.trim()) {
+    if (!projectVal) {
       setError("Project key is required (e.g. KAN).");
       return;
     }
     setCreating(true);
     try {
       const result = await createJiraIssue({
-        summary: summary.trim(),
-        description: description.trim() || summary.trim(),
-        projectKey: projectKey.trim(),
+        summary: summaryVal,
+        description: descriptionVal || summaryVal,
+        projectKey: projectVal,
         issueType: issueType.trim() || undefined,
       });
       setCreatedUrl(result.url);
-      onCreated?.(result.url, projectKey.trim());
+      onCreated?.(result.url, projectVal);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to create issue");
     } finally {
@@ -158,6 +162,7 @@ export default function CreateJiraModal({
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
               <Button
+                type="button"
                 onClick={handleCreate}
                 disabled={creating}
                 className="w-full tofu-gradient text-primary-foreground hover:opacity-90"
