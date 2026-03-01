@@ -138,44 +138,5 @@ const TopBar = () => {
     </header>
   );
 };
-        <button className="hidden md:flex items-center gap-2 px-3 py-1.5 text-sm text-foreground hover:bg-muted rounded-lg transition-colors">
-          <BarChart3 className="w-4 h-4" />
-          Analytics
-        </button>
-        <button className="hidden md:flex items-center gap-2 px-3 py-1.5 text-sm text-foreground hover:bg-muted rounded-lg transition-colors">
-          <Share2 className="w-4 h-4" />
-          Share
-        </button>
-        <Link
-          href="/settings"
-          className="hidden md:flex items-center gap-2 px-3 py-1.5 text-sm text-foreground hover:bg-muted rounded-lg transition-colors"
-        >
-          <Settings className="w-4 h-4" />
-          Settings
-        </Link>
-        <div className="hidden sm:flex gap-1">
-          <Link
-            href="/settings"
-            className="md:hidden p-2 text-foreground hover:bg-muted rounded-lg transition-colors"
-            aria-label="Settings"
-          >
-            <Settings className="w-4 h-4" />
-          </Link>
-        </div>
-        <button
-          onClick={signOut}
-          className="hidden md:flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
-          title="Sign out"
-        >
-          <LogOut className="w-4 h-4" />
-          Sign out
-        </button>
-        <div className="w-8 h-8 rounded-full tofu-gradient ml-1 md:ml-2 flex-shrink-0 flex items-center justify-center text-primary-foreground text-xs font-medium" title={user?.email}>
-          {user?.user_metadata?.display_name?.charAt(0) ?? user?.email?.charAt(0) ?? "?"}
-        </div>
-      </div>
-    </header>
-  );
-};
 
 export default TopBar;
