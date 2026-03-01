@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, BarChart3, Share2, Settings, ChevronDown, LogOut, FolderOpen, Pencil, Trash2 } from "lucide-react";
+import { Plus, BarChart3, Share2, Settings, ChevronDown, LogOut, FolderOpen, Pencil, Trash2, Bot } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProject } from "@/contexts/ProjectContext";
@@ -37,8 +37,10 @@ const TopBar = () => {
     setDropdownOpen(false);
     setCreating(true);
     try {
-      await createProjectAndSwitch("Untitled Project");
+      const newProject = await createProjectAndSwitch("Untitled Project");
       await refreshProjects();
+      setRenameProject(newProject);
+      setRenameValue("");
     } finally {
       setCreating(false);
     }
@@ -97,7 +99,7 @@ const TopBar = () => {
         {/* Logo */}
         <div className="flex items-center gap-2 flex-shrink-0">
           <div className="w-8 h-8 rounded-lg tofu-gradient flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">🧊</span>
+            <Bot className="w-4 h-4 text-primary-foreground" />
           </div>
           <span className="font-semibold text-foreground text-sm tracking-tight hidden sm:inline">tofuOS</span>
         </div>
@@ -186,8 +188,12 @@ const TopBar = () => {
       <Dialog open={!!renameProject} onOpenChange={(open) => !open && setRenameProject(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Rename project</DialogTitle>
-            <DialogDescription>Enter a new name for this project.</DialogDescription>
+            <DialogTitle>{renameProject?.name === "Untitled Project" ? "Name your project" : "Rename project"}</DialogTitle>
+            <DialogDescription>
+              {renameProject?.name === "Untitled Project"
+                ? "Give your new project a name so you can find it easily."
+                : "Enter a new name for this project."}
+            </DialogDescription>
           </DialogHeader>
           <div className="py-2">
             <Input
@@ -197,7 +203,7 @@ const TopBar = () => {
                 if (e.key === "Enter") handleSaveRename();
                 if (e.key === "Escape") setRenameProject(null);
               }}
-              placeholder="Project name"
+              placeholder={renameProject?.name === "Untitled Project" ? "e.g. Q1 Roadmap" : "Project name"}
               className="w-full"
               autoFocus
             />
@@ -207,7 +213,7 @@ const TopBar = () => {
               Cancel
             </Button>
             <Button onClick={handleSaveRename} disabled={saving || !renameValue.trim()}>
-              {saving ? "Saving…" : "Save"}
+              {saving ? "Saving…" : renameProject?.name === "Untitled Project" ? "Create" : "Save"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -234,10 +240,13 @@ const TopBar = () => {
       </Dialog>
 
       <div className="flex items-center gap-1 flex-shrink-0">
-        <button className="hidden md:flex items-center gap-2 px-3 py-1.5 text-sm text-foreground hover:bg-muted rounded-lg transition-colors">
+        <Link
+          href="/analytics"
+          className="hidden md:flex items-center gap-2 px-3 py-1.5 text-sm text-foreground hover:bg-muted rounded-lg transition-colors"
+        >
           <BarChart3 className="w-4 h-4" />
           Analytics
-        </button>
+        </Link>
         <button className="hidden md:flex items-center gap-2 px-3 py-1.5 text-sm text-foreground hover:bg-muted rounded-lg transition-colors">
           <Share2 className="w-4 h-4" />
           Share

@@ -160,17 +160,18 @@ const StudioPanel = ({ mobile }: { mobile?: boolean }) => {
                   type="button"
                   onClick={handleCopy}
                   className="p-1.5 rounded hover:bg-muted transition-colors"
-                  title="Copy"
+                  title="Copy to clipboard"
                 >
                   <Copy className="w-3.5 h-3.5 text-muted-foreground" />
                 </button>
                 <button
                   type="button"
                   onClick={handleDownload}
-                  className="p-1.5 rounded hover:bg-muted transition-colors"
-                  title="Download .md"
+                  className="p-1.5 rounded hover:bg-muted transition-colors flex items-center gap-1.5"
+                  title="Download as Markdown (.md)"
                 >
-                  <Download className="w-3.5 h-3.5 text-muted-foreground" />
+                  <Download className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                  <span className="text-xs text-muted-foreground">Download</span>
                 </button>
               </div>
             </div>

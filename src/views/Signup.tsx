@@ -25,7 +25,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle } from "lucide-react";
+import { AlertCircle, CheckCircle, Bot } from "lucide-react";
 
 const signupSchema = z
   .object({
@@ -110,7 +110,7 @@ const Signup = () => {
       <Card className="w-full max-w-md border-border shadow-sm">
         <CardHeader className="space-y-1 text-center">
           <div className="mx-auto w-10 h-10 rounded-lg tofu-gradient flex items-center justify-center mb-2">
-            <span className="text-primary-foreground font-bold text-sm">🧊</span>
+            <Bot className="w-5 h-5 text-primary-foreground" />
           </div>
           <CardTitle className="text-2xl font-semibold tracking-tight">
             Create an account
