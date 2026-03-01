@@ -55,6 +55,15 @@ export async function updateProject(id: string, name: string): Promise<Project> 
   return data as Project;
 }
 
+export async function deleteProject(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('projects')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
+}
+
 export interface Source {
   id: string;
   name: string;

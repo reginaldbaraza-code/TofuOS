@@ -3,9 +3,18 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { getJiraConfig } from "@/lib/api";
+import { useProject } from "@/contexts/ProjectContext";
+import {
+  getJiraConfig,
+  fetchProjects,
+  updateProject,
+  deleteProject,
+  type JiraConfig,
+  type Project,
+} from "@/lib/api";
 import JiraConfigModal from "@/components/JiraConfigModal";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -16,6 +25,14 @@ import {
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   User,
   LogOut,
   Key,
@@ -25,19 +42,77 @@ import {
   XCircle,
   Sparkles,
   Info,
+  FolderOpen,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 
 const Settings = () => {
   const { user, signOut } = useAuth();
-  const [jiraConfigured, setJiraConfigured] = useState(false);
+  const { projects: _projects, setCurrentProjectId, refreshProjects, currentProjectId } = useProject();
+  const [jiraConfig, setJiraConfig] = useState<JiraConfig | null>(null);
   const [jiraConfigModalOpen, setJiraConfigModalOpen] = useState(false);
+  const [projectsList, setProjectsList] = useState<Project[]>([]);
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
+  const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    getJiraConfig().then((c) => setJiraConfigured(!!c?.configured));
+    getJiraConfig().then((c) => setJiraConfig(c ?? null));
   }, []);
 
+  useEffect(() => {
+    fetchProjects().then(setProjectsList);
+  }, [jiraConfigModalOpen]);
+
+  const loadProjects = () => {
+    fetchProjects().then(setProjectsList);
+    refreshProjects();
+  };
+
   const handleJiraConfigSaved = () => {
-    setJiraConfigured(true);
+    getJiraConfig().then((c) => setJiraConfig(c ?? null));
+  };
+
+  const handleStartRename = (proj: Project) => {
+    setEditingProjectId(proj.id);
+    setEditingName(proj.name);
+  };
+
+  const handleSaveRename = async () => {
+    if (!editingProjectId || !editingName.trim()) return;
+    setSaving(true);
+    try {
+      await updateProject(editingProjectId, editingName.trim());
+      setEditingProjectId(null);
+      setEditingName("");
+      loadProjects();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancelRename = () => {
+    setEditingProjectId(null);
+    setEditingName("");
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteProjectId) return;
+    setDeleting(true);
+    try {
+      await deleteProject(deleteProjectId);
+      if (currentProjectId === deleteProjectId) {
+        const remaining = projectsList.filter((p) => p.id !== deleteProjectId);
+        setCurrentProjectId(remaining[0]?.id ?? null);
+      }
+      setDeleteProjectId(null);
+      loadProjects();
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -92,15 +167,23 @@ const Settings = () => {
           <CardContent className="space-y-6">
             {/* Jira */}
             <div className="space-y-3">
-              <div className="flex items-center justify-between gap-4">
-                <div>
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div className="min-w-0">
                   <p className="text-sm font-medium text-foreground">Jira</p>
                   <p className="text-xs text-muted-foreground">
                     Create tickets from insights in the Chat panel
                   </p>
+                  {jiraConfig?.configured && jiraConfig.domain && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Current: <span className="text-foreground">{jiraConfig.domain}</span>
+                      {jiraConfig.email && (
+                        <> · <span className="text-foreground">{jiraConfig.email}</span></>
+                      )}
+                    </p>
+                  )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  {jiraConfigured ? (
+                  {jiraConfig?.configured ? (
                     <span className="flex items-center gap-1.5 text-xs text-emerald-600">
                       <CheckCircle className="w-4 h-4" />
                       Connected
@@ -116,7 +199,7 @@ const Settings = () => {
                     size="sm"
                     onClick={() => setJiraConfigModalOpen(true)}
                   >
-                    {jiraConfigured ? "Reconfigure" : "Configure"}
+                    {jiraConfig?.configured ? "Reconfigure" : "Configure"}
                   </Button>
                 </div>
               </div>
@@ -153,6 +236,82 @@ const Settings = () => {
           </CardContent>
         </Card>
 
+        {/* Projects */}
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <FolderOpen className="w-4 h-4" />
+              Projects
+            </CardTitle>
+            <CardDescription>
+              Rename or delete projects. Sources, chat, and insights are stored per project.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {projectsList.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No projects yet. Create one from the app header.</p>
+            ) : (
+              <ul className="space-y-2">
+                {projectsList.map((proj) => (
+                  <li
+                    key={proj.id}
+                    className="flex items-center gap-2 p-3 rounded-lg border border-border bg-muted/20"
+                  >
+                    {editingProjectId === proj.id ? (
+                      <>
+                        <Input
+                          value={editingName}
+                          onChange={(e) => setEditingName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleSaveRename();
+                            if (e.key === "Escape") handleCancelRename();
+                          }}
+                          className="flex-1 h-8"
+                          placeholder="Project name"
+                          autoFocus
+                        />
+                        <Button size="sm" onClick={handleSaveRename} disabled={saving}>
+                          Save
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={handleCancelRename}>
+                          Cancel
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <span className="flex-1 text-sm font-medium text-foreground truncate">
+                          {proj.name}
+                        </span>
+                        {currentProjectId === proj.id && (
+                          <span className="text-xs text-muted-foreground shrink-0">Current</span>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 shrink-0"
+                          onClick={() => handleStartRename(proj)}
+                          title="Rename"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 shrink-0 text-destructive hover:text-destructive"
+                          onClick={() => setDeleteProjectId(proj.id)}
+                          title="Delete project"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+
         {/* About */}
         <Card className="border-border">
           <CardHeader>
@@ -185,6 +344,24 @@ const Settings = () => {
         onOpenChange={setJiraConfigModalOpen}
         onSaved={handleJiraConfigSaved}
       />
+      <Dialog open={!!deleteProjectId} onOpenChange={(open) => !open && setDeleteProjectId(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete project</DialogTitle>
+            <DialogDescription>
+              This will permanently delete this project and all its sources, chat messages, and insights. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteProjectId(null)} disabled={deleting}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmDelete} disabled={deleting}>
+              {deleting ? "Deleting…" : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
