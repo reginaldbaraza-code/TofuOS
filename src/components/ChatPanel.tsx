@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from "react";
-import { Send, ThumbsUp, ThumbsDown, Copy, Pin, Sparkles, ExternalLink, MessageCircle, MoreVertical, Trash2, Search, ChevronUp, ChevronDown } from "lucide-react";
+import { Send, ThumbsUp, ThumbsDown, Copy, Pin, Sparkles, ExternalLink, MessageCircle, MoreVertical, Trash2, Search, ChevronUp, ChevronDown, Info } from "lucide-react";
 import { toast } from "sonner";
 import {
   fetchSources,
@@ -24,6 +24,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 interface Message {
@@ -74,6 +80,7 @@ const ChatPanel = () => {
   const [selectedSourcesCount, setSelectedSourcesCount] = useState(0);
   const [selectedSourceNames, setSelectedSourceNames] = useState<string[]>([]);
   const [feedbackByIndex, setFeedbackByIndex] = useState<Record<number, "up" | "down">>({});
+  const [insightDetail, setInsightDetail] = useState<InsightItem | null>(null);
 
   useEffect(() => {
     getJiraConfig().then((c) => {
@@ -478,7 +485,15 @@ const ChatPanel = () => {
                       <option key={s} value={s}>{insightStatusColors[s].label}</option>
                     ))}
                   </select>
-                  <span className="min-w-0">{insight.summary}</span>
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setInsightDetail(insight)}
+                    onKeyDown={(e) => e.key === "Enter" && setInsightDetail(insight)}
+                    className="min-w-0 cursor-pointer hover:underline focus:outline-none focus:underline"
+                  >
+                    {insight.summary}
+                  </span>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   <button
@@ -505,6 +520,10 @@ const ChatPanel = () => {
                         <MessageCircle className="w-4 h-4" />
                         Ask AI / Follow up
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setInsightDetail(insight)} className="flex items-center gap-2 cursor-pointer">
+                        <Info className="w-4 h-4" />
+                        View details
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleCopyFullInsight(insight)} className="flex items-center gap-2 cursor-pointer">
                         <Copy className="w-4 h-4" />
                         Copy full (summary + description)
@@ -524,6 +543,49 @@ const ChatPanel = () => {
           </ul>
         </div>
       )}
+
+      {/* Insight detail popup */}
+      <Dialog open={!!insightDetail} onOpenChange={(open) => !open && setInsightDetail(null)}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          {insightDetail && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-base pr-6">{insightDetail.summary}</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 text-sm">
+                <div>
+                  <p className="font-medium text-muted-foreground mb-1">Status</p>
+                  <span
+                    className={cn(
+                      "inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium",
+                      insightStatusColors[insightDetail.status ?? "not_started"].badge
+                    )}
+                  >
+                    {insightStatusColors[insightDetail.status ?? "not_started"].label}
+                  </span>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground mb-1">Description</p>
+                  <p className="text-foreground whitespace-pre-wrap">{insightDetail.description || "—"}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground mb-1">Sources</p>
+                  <p className="text-foreground">
+                    {insightDetail.sourceNames?.length
+                      ? insightDetail.sourceNames.join(", ")
+                      : "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground mb-1">Evidence / Analysis</p>
+                  <p className="text-foreground whitespace-pre-wrap">{insightDetail.evidence || "—"}</p>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {analyzeError && (
         <div className="px-3 sm:px-6 py-2 text-sm text-destructive flex-shrink-0">{analyzeError}</div>
       )}

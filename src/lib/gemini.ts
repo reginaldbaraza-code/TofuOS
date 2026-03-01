@@ -7,11 +7,11 @@ import type { GoogleGenerativeAI } from "@google/generative-ai";
 const RATE_LIMIT_RETRY_DELAY_MS = 30_000; // 30 seconds
 const MAX_RETRIES = 1;
 
-/** Default model list: primary first, then fallbacks (separate quotas per model). */
+/** Default model list: primary first, then fallbacks (separate quotas per model). Use IDs supported by v1beta. */
 export const GEMINI_FALLBACK_MODELS = [
   "gemini-2.5-flash",
   "gemini-2.0-flash",
-  "gemini-1.5-flash",
+  "gemini-1.5-flash-001", // v1beta uses versioned ID, not "gemini-1.5-flash"
 ] as const;
 
 export function getGeminiModelList(): string[] {
@@ -31,6 +31,11 @@ function isRateLimitError(error: unknown): boolean {
     message.includes("quota") ||
     message.includes("Quota exceeded")
   );
+}
+
+function isModelNotFoundError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.includes("404") || message.includes("not found") || message.includes("is not supported");
 }
 
 export async function withGeminiRetry<T>(
@@ -71,8 +76,15 @@ export async function withGeminiModelFallback<T>(
       return await withGeminiRetry(() => fn(model));
     } catch (error) {
       lastError = error;
-      if (!isRateLimitError(error)) throw error;
-      console.warn(`[Gemini] Rate limit on model "${modelName}", trying next model.`);
+      const rateLimited = isRateLimitError(error);
+      const notFound = isModelNotFoundError(error);
+      if (rateLimited) {
+        console.warn(`[Gemini] Rate limit on model "${modelName}", trying next model.`);
+      } else if (notFound) {
+        console.warn(`[Gemini] Model "${modelName}" not found or not supported, trying next model.`);
+      } else {
+        throw error;
+      }
     }
   }
   throw lastError;

@@ -106,6 +106,10 @@ export interface InsightItem {
   summary: string;
   description: string;
   status?: InsightStatus;
+  /** Source names this insight is based on (from analysis). */
+  sourceNames?: string[];
+  /** Key evidence or reasoning from the sources (from analysis). */
+  evidence?: string;
 }
 
 export async function updateSources(sources: Source[]): Promise<Source[]> {
@@ -190,10 +194,12 @@ export async function getProjectInsights(projectId: string | null): Promise<Insi
 
   if (error || !data?.insights) return [];
   const raw = Array.isArray(data.insights) ? data.insights : [];
-  return raw.map((item: { summary?: string; description?: string; status?: InsightStatus }) => ({
+  return raw.map((item: { summary?: string; description?: string; status?: InsightStatus; sourceNames?: string[]; source_names?: string[]; evidence?: string }) => ({
     summary: item.summary ?? "",
     description: item.description ?? "",
     status: (item.status as InsightStatus) ?? "not_started",
+    sourceNames: item.sourceNames ?? item.source_names ?? undefined,
+    evidence: item.evidence ?? undefined,
   }));
 }
 
@@ -202,6 +208,8 @@ export async function saveProjectInsights(projectId: string, insights: InsightIt
     summary: i.summary,
     description: i.description,
     status: i.status ?? "not_started",
+    ...(i.sourceNames != null && { sourceNames: i.sourceNames }),
+    ...(i.evidence != null && i.evidence !== "" && { evidence: i.evidence }),
   }));
   const { error } = await supabase
     .from('project_insights')

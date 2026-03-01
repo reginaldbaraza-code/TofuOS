@@ -68,9 +68,11 @@ ${sourceContext}
 Generate 4 insights based on the content above. For each insight provide:
 1. summary: one short sentence (concise, actionable, suitable as a ticket title).
 2. description: 1-3 sentences with more detail, citing specific evidence from the sources where possible.
+3. sourceNames: an array of the exact source names (from the "Source: ..." headers above) that this insight is based on, e.g. ["Interview Notes Q1", "App Store Reviews"].
+4. evidence: 1-2 sentences with a key quote or specific evidence from the source(s) that support this insight.
 
-Return a valid JSON object with a single key 'insights' containing an array of 4 objects, each with keys "summary" and "description".
-Example: {"insights": [{"summary": "Short title", "description": "Longer detail here."}, ...]}`;
+Return a valid JSON object with a single key 'insights' containing an array of 4 objects, each with keys "summary", "description", "sourceNames", and "evidence".
+Example: {"insights": [{"summary": "Short title", "description": "Longer detail here.", "sourceNames": ["Source A"], "evidence": "Users said X in the interviews."}, ...]}`;
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const data = await withGeminiModelFallback(genAI, getGeminiModelList(), async (model) => {
@@ -78,7 +80,16 @@ Example: {"insights": [{"summary": "Short title", "description": "Longer detail 
       const response = await result.response;
       const text = response.text();
       const cleanedText = text.replace(/```json|```/g, "").trim();
-      return JSON.parse(cleanedText);
+      const parsed = JSON.parse(cleanedText);
+      const rawInsights = Array.isArray(parsed.insights) ? parsed.insights : [];
+      return {
+        insights: rawInsights.map((item: { summary?: string; description?: string; sourceNames?: string[]; evidence?: string }) => ({
+          summary: item.summary ?? "",
+          description: item.description ?? "",
+          sourceNames: Array.isArray(item.sourceNames) ? item.sourceNames : [],
+          evidence: typeof item.evidence === "string" ? item.evidence : "",
+        })),
+      };
     });
 
     const suggestedPrompts = [
