@@ -49,7 +49,7 @@ export async function POST(req: Request) {
         parts: [{ text: h.content }],
       })),
       generationConfig: {
-        maxOutputTokens: 1000,
+        maxOutputTokens: 8192,
       },
     });
 
