@@ -334,7 +334,7 @@ const ChatPanel = () => {
   };
 
   return (
-    <main className="flex-1 flex flex-col min-w-0 min-h-0 panel-bg">
+    <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden panel-bg">
       {/* Header: single Analyze button, no placeholder Filters/More */}
       <div className="px-3 sm:px-6 py-3 border-b border-border flex-shrink-0 space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -417,8 +417,8 @@ const ChatPanel = () => {
 
       {/* Insights list with status filter and one Export to Jira per row, rest in More */}
       {insights.length > 0 && (
-        <div className="px-3 sm:px-6 py-4 border-b border-border bg-muted/30 flex-shrink-0">
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <div className="px-3 sm:px-6 py-4 border-b border-border bg-muted/30 flex-shrink-0 flex flex-col min-h-0">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-3 flex-shrink-0">
             <h3 className="text-sm font-medium text-foreground">Insights (project manager)</h3>
             <select
               value={insightStatusFilter}
@@ -432,7 +432,7 @@ const ChatPanel = () => {
               <option value="done">{insightStatusColors.done.label}</option>
             </select>
           </div>
-          <ul className="space-y-2">
+          <ul className="space-y-2 overflow-y-auto min-h-0 max-h-[35vh] sm:max-h-none">
             {filteredInsights.map((insight, i) => {
               const globalIndex = insights.indexOf(insight);
               const status = insight.status ?? "not_started";
