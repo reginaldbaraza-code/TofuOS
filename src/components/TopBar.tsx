@@ -9,6 +9,14 @@ import { updateProject, deleteProject, type Project } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -266,35 +274,47 @@ const TopBar = () => {
           Settings
         </Link>
         <ThemeSwitcher />
-        <div className="hidden sm:flex gap-1 items-center">
-          <Link
-            href="/settings"
-            className="md:hidden p-2 text-foreground hover:bg-muted rounded-lg transition-colors"
-            aria-label="Settings"
-          >
-            <Settings className="w-4 h-4" />
-          </Link>
-          <button
-            type="button"
-            onClick={signOut}
-            className="md:hidden p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
-            aria-label="Sign out"
-            title="Sign out"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
-        </div>
-        <button
-          onClick={signOut}
-          className="hidden md:flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
-          title="Sign out"
-        >
-          <LogOut className="w-4 h-4" />
-          Sign out
-        </button>
-        <div className="w-8 h-8 rounded-full tofu-gradient ml-1 md:ml-2 flex-shrink-0 flex items-center justify-center text-primary-foreground text-xs font-medium" title={user?.email}>
-          {user?.user_metadata?.display_name?.charAt(0) ?? user?.email?.charAt(0) ?? "?"}
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="rounded-full focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 flex-shrink-0"
+              aria-label="Account menu"
+            >
+              <div className="w-8 h-8 rounded-full tofu-gradient flex items-center justify-center text-primary-foreground text-xs font-medium">
+                {user?.user_metadata?.display_name?.charAt(0) ?? user?.email?.charAt(0) ?? "?"}
+              </div>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel className="font-normal">
+              <p className="text-xs text-muted-foreground truncate" title={user?.email ?? undefined}>
+                {user?.email ?? "Signed in"}
+              </p>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/settings" className="flex items-center gap-2 cursor-pointer">
+                <Settings className="w-4 h-4" />
+                Settings
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/analytics" className="flex items-center gap-2 cursor-pointer">
+                <BarChart3 className="w-4 h-4" />
+                Analytics
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => signOut()}
+              className="flex items-center gap-2 text-destructive focus:text-destructive cursor-pointer"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

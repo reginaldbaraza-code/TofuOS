@@ -203,18 +203,19 @@ const ChatPanel = () => {
   };
 
   return (
-    <main className="flex-1 flex flex-col min-w-0 panel-bg">
+    <main className="flex-1 flex flex-col min-w-0 min-h-0 panel-bg">
       {/* Header */}
-      <div className="px-6 py-3 border-b border-border flex items-center justify-between">
+      <div className="px-3 sm:px-6 py-3 border-b border-border flex flex-wrap items-center justify-between gap-2 flex-shrink-0">
         <h2 className="text-sm font-semibold text-foreground">Chat</h2>
         <div className="flex items-center gap-1">
           <button
             onClick={handleAnalyze}
             disabled={analyzing}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium tofu-gradient text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-70"
+            className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg text-sm font-medium tofu-gradient text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-70"
           >
-            <Sparkles className="w-4 h-4" />
-            {analyzing ? "Analyzing…" : "Analyze sources"}
+            <Sparkles className="w-4 h-4 shrink-0" />
+            <span className="hidden sm:inline">{analyzing ? "Analyzing…" : "Analyze sources"}</span>
+            <span className="sm:hidden">{analyzing ? "…" : "Analyze"}</span>
           </button>
           <button
             type="button"
@@ -237,19 +238,19 @@ const ChatPanel = () => {
 
       {/* Insights list (PM analysis) */}
       {insights.length > 0 && (
-        <div className="px-6 py-4 border-b border-border bg-muted/30">
+        <div className="px-3 sm:px-6 py-4 border-b border-border bg-muted/30 flex-shrink-0">
           <h3 className="text-sm font-medium text-foreground mb-3">Insights (project manager)</h3>
           <ul className="space-y-2">
             {insights.map((insight, i) => (
               <li
                 key={i}
-                className="flex items-start gap-2 text-sm text-foreground bg-background border border-border rounded-lg px-3 py-2"
+                className="flex flex-col sm:flex-row sm:items-start gap-2 text-sm text-foreground bg-background border border-border rounded-lg px-3 py-2"
               >
                 <span className="flex-1 min-w-0">{insight.summary}</span>
                 <button
                   type="button"
                   onClick={() => handleCreateJiraClick(insight)}
-                  className="flex items-center gap-1.5 shrink-0 px-2.5 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                  className="flex items-center justify-center sm:justify-start gap-1.5 shrink-0 px-2.5 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
                   Create Jira ticket
@@ -260,13 +261,13 @@ const ChatPanel = () => {
         </div>
       )}
       {analyzeError && (
-        <div className="px-6 py-2 text-sm text-destructive">{analyzeError}</div>
+        <div className="px-3 sm:px-6 py-2 text-sm text-destructive flex-shrink-0">{analyzeError}</div>
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+      <div className="flex-1 min-h-0 overflow-y-auto px-3 sm:px-6 py-4 sm:py-6 space-y-6">
         {messages.length === 0 && !isThinking && (
-          <div className="text-center py-8 text-muted-foreground text-sm max-w-sm mx-auto">
+          <div className="text-center py-6 sm:py-8 text-muted-foreground text-sm max-w-sm mx-auto px-1">
             <p className="font-medium text-foreground mb-1">No messages yet</p>
             <p>Add sources in the left panel, then ask a question here or run &quot;Analyze sources&quot; to get AI insights.</p>
           </div>
@@ -275,11 +276,11 @@ const ChatPanel = () => {
           <div key={i}>
             {msg.role === "assistant" ? (
               <div className="space-y-3">
-                <div className="text-sm leading-relaxed text-foreground whitespace-pre-line">
+                <div className="text-sm leading-relaxed text-foreground whitespace-pre-line break-words">
                   {renderContent(msg.content)}
                 </div>
                 {msg.content !== "Thinking..." && (
-                  <div className="flex items-center gap-1 pt-1">
+                  <div className="flex items-center gap-1 pt-1 flex-wrap">
                     <button
                       type="button"
                       onClick={() => handlePin(msg.content)}
@@ -321,7 +322,7 @@ const ChatPanel = () => {
               </div>
             ) : (
               <div className="flex justify-end">
-                <div className="tofu-gradient text-primary-foreground px-4 py-2.5 rounded-2xl rounded-br-md text-sm max-w-md">
+                <div className="tofu-gradient text-primary-foreground px-3 sm:px-4 py-2.5 rounded-2xl rounded-br-md text-sm max-w-[85%] sm:max-w-md break-words">
                   {msg.content}
                 </div>
               </div>
@@ -347,29 +348,29 @@ const ChatPanel = () => {
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-border bg-background">
-        <div className="flex items-center gap-2 chat-input-bg border border-border rounded-xl px-4 py-2 focus-within:ring-2 focus-within:ring-ring transition-shadow mb-safe">
+      <div className="p-3 sm:p-4 border-t border-border bg-background flex-shrink-0">
+        <div className="flex items-center gap-2 chat-input-bg border border-border rounded-xl px-3 sm:px-4 py-2 focus-within:ring-2 focus-within:ring-ring transition-shadow min-w-0">
           <input
             type="text"
             placeholder="Type a message..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            className="flex-1 bg-transparent text-sm outline-none text-foreground placeholder:text-muted-foreground"
+            className="flex-1 min-w-0 bg-transparent text-sm outline-none text-foreground placeholder:text-muted-foreground"
           />
-          <span className="text-xs text-muted-foreground whitespace-nowrap">
+          <span className="text-xs text-muted-foreground whitespace-nowrap shrink-0 hidden sm:inline">
             {selectedSourcesCount} Source{selectedSourcesCount !== 1 ? "s" : ""}
           </span>
           <button
             type="button"
             onClick={handleSend}
-            className="p-1.5 rounded-lg tofu-gradient text-primary-foreground hover:opacity-90 transition-opacity"
+            className="p-1.5 rounded-lg tofu-gradient text-primary-foreground hover:opacity-90 transition-opacity shrink-0"
             aria-label="Send message"
           >
             <Send className="w-4 h-4" />
           </button>
         </div>
-        <p className="text-[11px] text-muted-foreground text-center mt-2">
+        <p className="text-[11px] text-muted-foreground text-center mt-2 px-1">
           Chat uses your selected sources as context. tofuOS can make mistakes — verify responses.
         </p>
       </div>
