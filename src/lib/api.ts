@@ -347,3 +347,57 @@ export async function createJiraIssue(params: {
 
   return response.json();
 }
+
+// --- Exported Jira tickets (per project, for Analysis list) ---
+export interface ExportedJiraTicket {
+  id: string;
+  project_id: string;
+  summary: string;
+  jira_key: string;
+  jira_url: string;
+  created_at?: string;
+}
+
+export async function getExportedJiraTickets(projectId: string | null): Promise<ExportedJiraTicket[]> {
+  if (!projectId) return [];
+
+  const { data, error } = await supabase
+    .from('project_jira_exports')
+    .select('id, project_id, summary, jira_key, jira_url, created_at')
+    .eq('project_id', projectId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching exported Jira tickets:', error);
+    return [];
+  }
+  return (data ?? []) as ExportedJiraTicket[];
+}
+
+export async function saveExportedJiraTicket(
+  projectId: string,
+  payload: { summary: string; jira_key: string; jira_url: string }
+): Promise<ExportedJiraTicket> {
+  const { data, error } = await supabase
+    .from('project_jira_exports')
+    .insert({
+      project_id: projectId,
+      summary: payload.summary,
+      jira_key: payload.jira_key,
+      jira_url: payload.jira_url,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as ExportedJiraTicket;
+}
+
+export async function deleteExportedJiraTicket(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('project_jira_exports')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
+}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from "react";
-import { Send, ThumbsUp, ThumbsDown, Copy, Pin, SlidersHorizontal, MoreVertical, Sparkles, ExternalLink } from "lucide-react";
+import { Send, ThumbsUp, ThumbsDown, Copy, Pin, SlidersHorizontal, MoreVertical, Sparkles, ExternalLink, MessageCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   fetchSources,
@@ -12,11 +12,20 @@ import {
   saveProjectInsights,
   getChatMessages,
   appendChatMessage,
+  getExportedJiraTickets,
+  saveExportedJiraTicket,
+  deleteExportedJiraTicket,
 } from "@/lib/api";
-import type { InsightItem } from "@/lib/api";
+import type { InsightItem, ExportedJiraTicket } from "@/lib/api";
 import { useProject } from "@/contexts/ProjectContext";
 import JiraConfigModal from "@/components/JiraConfigModal";
 import CreateJiraModal from "@/components/CreateJiraModal";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Message {
   role: "user" | "assistant";
@@ -43,6 +52,7 @@ const ChatPanel = () => {
   const [lastProjectKey, setLastProjectKey] = useState("");
   const [selectedSourcesCount, setSelectedSourcesCount] = useState(0);
   const [feedbackByIndex, setFeedbackByIndex] = useState<Record<number, "up" | "down">>({});
+  const [exportedTickets, setExportedTickets] = useState<ExportedJiraTicket[]>([]);
 
   useEffect(() => {
     getJiraConfig().then((c) => {
@@ -51,23 +61,26 @@ const ChatPanel = () => {
     });
   }, []);
 
-  // Load messages and insights when project changes
+  // Load messages, insights, and exported tickets when project changes
   useEffect(() => {
     if (!currentProjectId) {
       setMessages([]);
       setInsights([]);
+      setExportedTickets([]);
       setAnalyzeError(null);
       setSelectedSourcesCount(0);
       return;
     }
     setAnalyzeError(null);
     (async () => {
-      const [msgList, insightList] = await Promise.all([
+      const [msgList, insightList, tickets] = await Promise.all([
         getChatMessages(currentProjectId),
         getProjectInsights(currentProjectId),
+        getExportedJiraTickets(currentProjectId),
       ]);
       setMessages(msgList.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })));
       setInsights(insightList);
+      setExportedTickets(tickets);
       const sources = await fetchSources(currentProjectId);
       setSelectedSourcesCount(sources.filter((s) => s.selected).length);
     })();
@@ -125,6 +138,38 @@ const ChatPanel = () => {
     if (createJiraInsight) {
       setCreateJiraModalOpen(true);
     }
+  };
+
+  const handleJiraCreated = useCallback(
+    async (url: string, issueKey: string, summary: string) => {
+      if (!currentProjectId) return;
+      try {
+        await saveExportedJiraTicket(currentProjectId, { summary, jira_key: issueKey, jira_url: url });
+        const tickets = await getExportedJiraTickets(currentProjectId);
+        setExportedTickets(tickets);
+      } catch (e) {
+        toast.error("Failed to save export record");
+      }
+    },
+    [currentProjectId]
+  );
+
+  const handleDeleteInsight = async (index: number) => {
+    if (!currentProjectId) return;
+    const next = insights.filter((_, i) => i !== index);
+    setInsights(next);
+    try {
+      await saveProjectInsights(currentProjectId, next);
+      toast.success("Insight removed");
+    } catch (e) {
+      toast.error("Failed to remove insight");
+      setInsights(insights);
+    }
+  };
+
+  const handleAskAI = (insight: InsightItem) => {
+    setInput(`Can you elaborate on this insight or suggest next steps? "${insight.summary}"`);
+    toast.info("Question added to chat — send to get a response");
   };
 
   const handleSend = async () => {
@@ -247,14 +292,102 @@ const ChatPanel = () => {
                 className="flex flex-col sm:flex-row sm:items-start gap-2 text-sm text-foreground bg-background border border-border rounded-lg px-3 py-2"
               >
                 <span className="flex-1 min-w-0">{insight.summary}</span>
-                <button
-                  type="button"
-                  onClick={() => handleCreateJiraClick(insight)}
-                  className="flex items-center justify-center sm:justify-start gap-1.5 shrink-0 px-2.5 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleCreateJiraClick(insight)}
+                    className="flex items-center justify-center sm:justify-start gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    Export to Jira
+                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground"
+                        aria-label="Insight options"
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => handleAskAI(insight)}
+                        className="flex items-center gap-2 cursor-pointer"
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                        Ask AI / Follow up
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleCreateJiraClick(insight)}
+                        className="flex items-center gap-2 cursor-pointer"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        Export to Jira
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleDeleteInsight(i)}
+                        className="flex items-center gap-2 text-destructive focus:text-destructive cursor-pointer"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Delete insight
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {/* Exported to Jira (under Analysis) */}
+      {exportedTickets.length > 0 && (
+        <div className="px-3 sm:px-6 py-4 border-b border-border bg-muted/20 flex-shrink-0">
+          <h3 className="text-sm font-medium text-foreground mb-3">Exported to Jira</h3>
+          <ul className="space-y-2">
+            {exportedTickets.map((t) => (
+              <li
+                key={t.id}
+                className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-foreground bg-background border border-border rounded-lg px-3 py-2"
+              >
+                <a
+                  href={t.jira_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 min-w-0 text-primary hover:underline truncate"
                 >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  Create Jira ticket
-                </button>
+                  <span className="font-medium">{t.jira_key}</span>
+                  <span className="text-muted-foreground ml-1.5">— {t.summary}</span>
+                </a>
+                <div className="flex items-center gap-1 shrink-0">
+                  <a
+                    href={t.jira_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    Open in Jira
+                  </a>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await deleteExportedJiraTicket(t.id);
+                        setExportedTickets((prev) => prev.filter((x) => x.id !== t.id));
+                        toast.success("Removed from list");
+                      } catch (e) {
+                        toast.error("Failed to remove");
+                      }
+                    }}
+                    className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                    aria-label="Remove from list"
+                    title="Remove from list (does not delete the Jira ticket)"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
@@ -386,8 +519,9 @@ const ChatPanel = () => {
         onOpenChange={setCreateJiraModalOpen}
         insight={createJiraInsight}
         initialProjectKey={lastProjectKey}
-        onCreated={(url, key) => {
-          setLastProjectKey(key);
+        onCreated={(url, issueKey, summary) => {
+          setLastProjectKey(issueKey.split("-")[0] || lastProjectKey);
+          handleJiraCreated(url, issueKey, summary);
         }}
       />
     </main>

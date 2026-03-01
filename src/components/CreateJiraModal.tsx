@@ -19,7 +19,7 @@ interface CreateJiraModalProps {
   onOpenChange: (open: boolean) => void;
   insight: { summary: string; description: string } | null;
   initialProjectKey?: string;
-  onCreated?: (url: string, projectKey: string) => void;
+  onCreated?: (url: string, issueKey: string, summary: string) => void;
 }
 
 export default function CreateJiraModal({
@@ -83,7 +83,7 @@ export default function CreateJiraModal({
         issueType: issueType.trim() || undefined,
       });
       setCreatedUrl(result.url);
-      onCreated?.(result.url, projectVal);
+      onCreated?.(result.url, result.key, summaryVal);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to create issue");
     } finally {
