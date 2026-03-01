@@ -7,8 +7,10 @@ import {
   fetchSources,
   getProjectInsights,
   getChatMessages,
+  getExportedJiraTickets,
   type Project,
 } from "@/lib/api";
+import type { ExportedJiraTicket } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -27,13 +29,14 @@ import {
 } from "@/components/ui/table";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart, XAxis, YAxis, CartesianGrid } from "recharts";
-import { BarChart3, ChevronLeft, FolderOpen, FileText, MessageSquare, Sparkles } from "lucide-react";
+import { BarChart3, ChevronLeft, FolderOpen, FileText, MessageSquare, Sparkles, ExternalLink } from "lucide-react";
 
 export interface ProjectStats {
   project: Project;
   sourcesCount: number;
   insightsCount: number;
   messagesCount: number;
+  exports: ExportedJiraTicket[];
 }
 
 const chartConfig = {
@@ -62,16 +65,18 @@ const Analytics = () => {
 
         const results = await Promise.all(
           projects.map(async (project) => {
-            const [sources, insights, messages] = await Promise.all([
+            const [sources, insights, messages, exports] = await Promise.all([
               fetchSources(project.id),
               getProjectInsights(project.id),
               getChatMessages(project.id),
+              getExportedJiraTickets(project.id),
             ]);
             return {
               project,
               sourcesCount: sources.length,
               insightsCount: insights.length,
               messagesCount: messages.length,
+              exports,
             };
           }),
         );
@@ -254,6 +259,58 @@ const Analytics = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Exported to Jira — grouped by project */}
+        {!loading && stats.some((s) => s.exports.length > 0) && (
+          <Card className="border-border">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <ExternalLink className="w-4 h-4" />
+                Exported to Jira
+              </CardTitle>
+              <CardDescription>
+                Tickets created from insights, grouped by project
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {stats
+                .filter((s) => s.exports.length > 0)
+                .map(({ project, exports: tickets }) => (
+                  <div key={project.id} className="space-y-2">
+                    <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <FolderOpen className="w-4 h-4 text-muted-foreground" />
+                      {project.name}
+                    </h3>
+                    <ul className="space-y-2 pl-6 border-l-2 border-muted">
+                      {tickets.map((t) => (
+                        <li key={t.id} className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 py-1">
+                          <a
+                            href={t.jira_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-primary hover:underline truncate"
+                          >
+                            <span className="font-medium">{t.jira_key}</span>
+                            <span className="text-muted-foreground ml-1.5">— {t.summary}</span>
+                          </a>
+                          <a
+                            href={t.jira_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary shrink-0"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            Open in Jira
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+            </CardContent>
+          </Card>
+        )}
+
       </div>
     </div>
   );

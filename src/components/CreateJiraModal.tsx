@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -38,6 +38,7 @@ export default function CreateJiraModal({
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [createdUrl, setCreatedUrl] = useState<string | null>(null);
+  const createInProgressRef = useRef(false);
 
   useEffect(() => {
     if (open) {
@@ -51,10 +52,11 @@ export default function CreateJiraModal({
   const reset = () => {
     setSummary(insight?.summary ?? "");
     setDescription(insight?.description ?? "");
-    setProjectKey("");
+    setProjectKey(initialProjectKey || "");
     setIssueType("Task");
     setError(null);
     setCreatedUrl(null);
+    createInProgressRef.current = false;
   };
 
   const handleOpenChange = (next: boolean) => {
@@ -63,6 +65,7 @@ export default function CreateJiraModal({
   };
 
   const handleCreate = async () => {
+    if (createInProgressRef.current) return;
     setError(null);
     // Use current state, falling back to insight prop in case effect hasn't run yet (avoids needing two clicks)
     const summaryVal = summary.trim() || insight?.summary?.trim() || "";
@@ -76,6 +79,7 @@ export default function CreateJiraModal({
       setError("Project key is required (e.g. KAN).");
       return;
     }
+    createInProgressRef.current = true;
     setCreating(true);
     try {
       const result = await createJiraIssue({
@@ -91,6 +95,7 @@ export default function CreateJiraModal({
       setError(e instanceof Error ? e.message : "Failed to create issue");
     } finally {
       setCreating(false);
+      createInProgressRef.current = false;
     }
   };
 

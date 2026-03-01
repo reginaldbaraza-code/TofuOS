@@ -12,10 +12,8 @@ import {
   saveProjectInsights,
   getChatMessages,
   appendChatMessage,
-  getExportedJiraTickets,
-  deleteExportedJiraTicket,
 } from "@/lib/api";
-import type { InsightItem, ExportedJiraTicket } from "@/lib/api";
+import type { InsightItem } from "@/lib/api";
 import { useProject } from "@/contexts/ProjectContext";
 import JiraConfigModal from "@/components/JiraConfigModal";
 import CreateJiraModal from "@/components/CreateJiraModal";
@@ -51,7 +49,6 @@ const ChatPanel = () => {
   const [lastProjectKey, setLastProjectKey] = useState("");
   const [selectedSourcesCount, setSelectedSourcesCount] = useState(0);
   const [feedbackByIndex, setFeedbackByIndex] = useState<Record<number, "up" | "down">>({});
-  const [exportedTickets, setExportedTickets] = useState<ExportedJiraTicket[]>([]);
 
   useEffect(() => {
     getJiraConfig().then((c) => {
@@ -60,26 +57,23 @@ const ChatPanel = () => {
     });
   }, []);
 
-  // Load messages, insights, and exported tickets when project changes
+  // Load messages and insights when project changes
   useEffect(() => {
     if (!currentProjectId) {
       setMessages([]);
       setInsights([]);
-      setExportedTickets([]);
       setAnalyzeError(null);
       setSelectedSourcesCount(0);
       return;
     }
     setAnalyzeError(null);
     (async () => {
-      const [msgList, insightList, tickets] = await Promise.all([
+      const [msgList, insightList] = await Promise.all([
         getChatMessages(currentProjectId),
         getProjectInsights(currentProjectId),
-        getExportedJiraTickets(currentProjectId),
       ]);
       setMessages(msgList.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })));
       setInsights(insightList);
-      setExportedTickets(tickets);
       const sources = await fetchSources(currentProjectId);
       setSelectedSourcesCount(sources.filter((s) => s.selected).length);
     })();
@@ -140,16 +134,13 @@ const ChatPanel = () => {
   };
 
   const handleJiraCreated = useCallback(
-    async (url: string, issueKey: string, summary: string) => {
-      if (!currentProjectId) return;
+    (url: string, issueKey: string, summary: string) => {
       setLastProjectKey((prev) => issueKey.split("-")[0] || prev);
       getJiraConfig().then((c) => {
         if (c?.lastProjectKey) setLastProjectKey(c.lastProjectKey);
       });
-      const tickets = await getExportedJiraTickets(currentProjectId);
-      setExportedTickets(tickets);
     },
-    [currentProjectId]
+    []
   );
 
   const handleDeleteInsight = async (index: number) => {
@@ -337,62 +328,6 @@ const ChatPanel = () => {
               </li>
             ))}
           </ul>
-        </div>
-      )}
-      {/* Exported to Jira (under Analysis) - show when we have insights or any exports */}
-      {(insights.length > 0 || exportedTickets.length > 0) && (
-        <div className="px-3 sm:px-6 py-4 border-b border-border bg-muted/20 flex-shrink-0">
-          <h3 className="text-sm font-medium text-foreground mb-3">Exported to Jira</h3>
-          {exportedTickets.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No tickets exported yet. Use &quot;Export to Jira&quot; on an insight above.</p>
-          ) : (
-          <ul className="space-y-2">
-            {exportedTickets.map((t) => (
-              <li
-                key={t.id}
-                className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-foreground bg-background border border-border rounded-lg px-3 py-2"
-              >
-                <a
-                  href={t.jira_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 min-w-0 text-primary hover:underline truncate"
-                >
-                  <span className="font-medium">{t.jira_key}</span>
-                  <span className="text-muted-foreground ml-1.5">— {t.summary}</span>
-                </a>
-                <div className="flex items-center gap-1 shrink-0">
-                  <a
-                    href={t.jira_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    Open in Jira
-                  </a>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      try {
-                        await deleteExportedJiraTicket(t.id);
-                        setExportedTickets((prev) => prev.filter((x) => x.id !== t.id));
-                        toast.success("Removed from list");
-                      } catch (e) {
-                        toast.error("Failed to remove");
-                      }
-                    }}
-                    className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-                    aria-label="Remove from list"
-                    title="Remove from list (does not delete the Jira ticket)"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-          )}
         </div>
       )}
       {analyzeError && (
