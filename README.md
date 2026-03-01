@@ -85,6 +85,10 @@ drop policy if exists "Users can manage their own jira config" on jira_configs;
 create policy "Users can manage their own jira config" on jira_configs for all using (auth.uid() = user_id);
 ```
 
+**Projects** (enables project switcher; sources, insights, and chat are stored per project):
+
+Run the migration in `supabase/migrations/20250226000000_add_projects.sql` in the SQL Editor, or run the SQL it contains. This creates `projects`, adds `project_id` to `sources`, and adds `project_insights` and `chat_messages` tables. If you have existing sources, uncomment and run the backfill at the bottom of that file once to assign them to a default project.
+
 ### 4. Run the app
 
 ```bash

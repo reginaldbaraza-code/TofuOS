@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import AddSourcesModal from "@/components/AddSourcesModal";
 import type { StoreType } from "@/components/AddSourcesModal";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProject } from "@/contexts/ProjectContext";
 import {
   fetchSources,
   updateSources,
@@ -15,6 +16,7 @@ import {
 
 const SourcesPanel = ({ mobile }: { mobile?: boolean }) => {
   const { isAuthenticated } = useAuth();
+  const { currentProjectId } = useProject();
   const [sources, setSources] = useState<Source[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -22,11 +24,11 @@ const SourcesPanel = ({ mobile }: { mobile?: boolean }) => {
   const [error, setError] = useState<string | null>(null);
 
   const loadSources = useCallback(async () => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || !currentProjectId) return;
     setLoading(true);
     setError(null);
     try {
-      const list = await fetchSources();
+      const list = await fetchSources(currentProjectId);
       setSources(list);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load sources");
@@ -34,7 +36,7 @@ const SourcesPanel = ({ mobile }: { mobile?: boolean }) => {
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, currentProjectId]);
 
   useEffect(() => {
     loadSources();
@@ -74,8 +76,9 @@ const SourcesPanel = ({ mobile }: { mobile?: boolean }) => {
   };
 
   const handleAddReviews = async (store: StoreType, appPageUrl: string) => {
+    if (!currentProjectId) return;
     try {
-      await addReviewsSource(store, appPageUrl);
+      await addReviewsSource(currentProjectId, store, appPageUrl);
       await loadSources();
     } catch (e) {
       throw e;
@@ -83,8 +86,9 @@ const SourcesPanel = ({ mobile }: { mobile?: boolean }) => {
   };
 
   const handleAddDocuments = async (files: File[]) => {
+    if (!currentProjectId) return;
     try {
-      await addDocumentSources(files);
+      await addDocumentSources(currentProjectId, files);
       await loadSources();
     } catch (e) {
       throw e;
@@ -103,7 +107,8 @@ const SourcesPanel = ({ mobile }: { mobile?: boolean }) => {
       <div className="p-3">
         <button
           onClick={() => setAddModalOpen(true)}
-          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 border border-dashed border-border rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          disabled={!currentProjectId}
+          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 border border-dashed border-border rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-50 disabled:pointer-events-none"
         >
           <Plus className="w-4 h-4" />
           Add Sources

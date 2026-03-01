@@ -21,6 +21,7 @@ import {
   List,
 } from "lucide-react";
 import { fetchSources, generateStudioDocument } from "@/lib/api";
+import { useProject } from "@/contexts/ProjectContext";
 
 interface StudioItem {
   id: string;
@@ -44,6 +45,7 @@ const studioItems: StudioItem[] = [
 ];
 
 const StudioPanel = ({ mobile }: { mobile?: boolean }) => {
+  const { currentProjectId } = useProject();
   const [activeItem, setActiveItem] = useState<string | null>(null);
   const [gridLayout, setGridLayout] = useState(true);
   const [sources, setSources] = useState<{ id: string; selected: boolean }[]>([]);
@@ -52,13 +54,17 @@ const StudioPanel = ({ mobile }: { mobile?: boolean }) => {
   const [error, setError] = useState<string | null>(null);
 
   const loadSources = useCallback(async () => {
+    if (!currentProjectId) {
+      setSources([]);
+      return;
+    }
     try {
-      const list = await fetchSources();
+      const list = await fetchSources(currentProjectId);
       setSources(list.map((s) => ({ id: s.id, selected: s.selected })));
     } catch {
       setSources([]);
     }
-  }, []);
+  }, [currentProjectId]);
 
   useEffect(() => {
     loadSources();

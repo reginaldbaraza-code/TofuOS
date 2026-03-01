@@ -3,26 +3,90 @@
  */
 import { supabase } from './supabase/client';
 
+// --- Projects ---
+export interface Project {
+  id: string;
+  user_id: string;
+  name: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export async function fetchProjects(): Promise<Project[]> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from('projects')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('updated_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching projects:', error);
+    return [];
+  }
+  return (data ?? []) as Project[];
+}
+
+export async function createProject(name: string = 'Untitled Project'): Promise<Project> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { data, error } = await supabase
+    .from('projects')
+    .insert({ user_id: user.id, name })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Project;
+}
+
+export async function updateProject(id: string, name: string): Promise<Project> {
+  const { data, error } = await supabase
+    .from('projects')
+    .update({ name, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Project;
+}
+
 export interface Source {
   id: string;
   name: string;
   type: "pdf" | "link" | "transcript" | "reviews" | "document";
   selected: boolean;
+  project_id?: string;
   meta?: { store?: "play" | "apple"; url?: string; fileId?: string };
   user_id?: string;
 }
 
-export async function fetchSources(): Promise<Source[]> {
-  const { data, error } = await supabase
+export async function fetchSources(projectId: string | null): Promise<Source[]> {
+  if (!projectId) return [];
+
+  const q = supabase
     .from('sources')
     .select('*')
+    .eq('project_id', projectId)
     .order('created_at', { ascending: true });
+
+  const { data, error } = await q;
 
   if (error) {
     console.error('Error fetching sources:', error);
     return [];
   }
-  return data as Source[];
+  return (data ?? []) as Source[];
+}
+
+// --- Analyze (AI PM insights) ---
+export interface InsightItem {
+  summary: string;
+  description: string;
 }
 
 export async function updateSources(sources: Source[]): Promise<Source[]> {
@@ -38,6 +102,7 @@ export async function updateSources(sources: Source[]): Promise<Source[]> {
 }
 
 export async function addReviewsSource(
+  projectId: string,
   store: "play" | "apple",
   appPageUrl: string
 ): Promise<Source> {
@@ -48,6 +113,7 @@ export async function addReviewsSource(
     name: `${store === "play" ? "Play Store" : "App Store"} Reviews`,
     type: "reviews",
     selected: true,
+    project_id: projectId,
     meta: { store, url: appPageUrl },
     user_id: user.id
   };
@@ -62,7 +128,10 @@ export async function addReviewsSource(
   return data as Source;
 }
 
-export async function addDocumentSources(files: File[]): Promise<Source[]> {
+export async function addDocumentSources(
+  projectId: string,
+  files: File[]
+): Promise<Source[]> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
 
@@ -70,6 +139,7 @@ export async function addDocumentSources(files: File[]): Promise<Source[]> {
     name: file.name,
     type: file.name.toLowerCase().endsWith(".pdf") ? "pdf" : "document",
     selected: true,
+    project_id: projectId,
     user_id: user.id
   }));
 
@@ -82,12 +152,65 @@ export async function addDocumentSources(files: File[]): Promise<Source[]> {
   return data as Source[];
 }
 
-// --- Analyze (AI PM insights) ---
-export interface InsightItem {
-  summary: string;
-  description: string;
+// --- Project insights (stored per project) ---
+export async function getProjectInsights(projectId: string | null): Promise<InsightItem[]> {
+  if (!projectId) return [];
+
+  const { data, error } = await supabase
+    .from('project_insights')
+    .select('insights')
+    .eq('project_id', projectId)
+    .single();
+
+  if (error || !data?.insights) return [];
+  return Array.isArray(data.insights) ? (data.insights as InsightItem[]) : [];
 }
 
+export async function saveProjectInsights(projectId: string, insights: InsightItem[]): Promise<void> {
+  const { error } = await supabase
+    .from('project_insights')
+    .upsert({ project_id: projectId, insights, updated_at: new Date().toISOString() }, { onConflict: 'project_id' });
+
+  if (error) throw error;
+}
+
+// --- Chat messages (stored per project) ---
+export interface ChatMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  created_at?: string;
+}
+
+export async function getChatMessages(projectId: string | null): Promise<ChatMessage[]> {
+  if (!projectId) return [];
+
+  const { data, error } = await supabase
+    .from('chat_messages')
+    .select('id, role, content, created_at')
+    .eq('project_id', projectId)
+    .order('created_at', { ascending: true });
+
+  if (error) return [];
+  return (data ?? []) as ChatMessage[];
+}
+
+export async function appendChatMessage(
+  projectId: string,
+  role: "user" | "assistant",
+  content: string
+): Promise<ChatMessage> {
+  const { data, error } = await supabase
+    .from('chat_messages')
+    .insert({ project_id: projectId, role, content })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as ChatMessage;
+}
+
+// --- Analyze (AI PM insights) ---
 export async function analyzeSources(sourceIds: string[]): Promise<{ insights: InsightItem[] }> {
   const response = await fetch('/api/analyze', {
     method: 'POST',

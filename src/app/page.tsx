@@ -2,11 +2,14 @@
 
 import Index from '@/views/Index';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { ProjectProvider } from '@/contexts/ProjectContext';
 
 export default function Home() {
   return (
     <ProtectedRoute>
-      <Index />
+      <ProjectProvider>
+        <Index />
+      </ProjectProvider>
     </ProtectedRoute>
   );
 }

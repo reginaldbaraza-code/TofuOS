@@ -4,14 +4,29 @@ import TopBar from "@/components/TopBar";
 import SourcesPanel from "@/components/SourcesPanel";
 import ChatPanel from "@/components/ChatPanel";
 import StudioPanel from "@/components/StudioPanel";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useProject } from "@/contexts/ProjectContext";
 
 type MobileTab = "sources" | "chat" | "studio";
 
 const Index = () => {
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<MobileTab>("chat");
+  const { ensureProject, isLoading: projectLoading } = useProject();
+
+  useEffect(() => {
+    if (projectLoading) return;
+    ensureProject();
+  }, [projectLoading, ensureProject]);
+
+  if (projectLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background">
+        <div className="w-8 h-8 rounded-lg tofu-gradient animate-pulse" />
+      </div>
+    );
+  }
 
   if (isMobile) {
     return (

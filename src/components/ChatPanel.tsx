@@ -1,10 +1,20 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Send, ThumbsUp, ThumbsDown, Copy, Pin, SlidersHorizontal, MoreVertical, Sparkles, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-import { fetchSources, analyzeSources, getJiraConfig, chatWithAI } from "@/lib/api";
+import {
+  fetchSources,
+  analyzeSources,
+  getJiraConfig,
+  chatWithAI,
+  getProjectInsights,
+  saveProjectInsights,
+  getChatMessages,
+  appendChatMessage,
+} from "@/lib/api";
 import type { InsightItem } from "@/lib/api";
+import { useProject } from "@/contexts/ProjectContext";
 import JiraConfigModal from "@/components/JiraConfigModal";
 import CreateJiraModal from "@/components/CreateJiraModal";
 
@@ -20,6 +30,7 @@ const suggestions = [
 ];
 
 const ChatPanel = () => {
+  const { currentProjectId } = useProject();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [insights, setInsights] = useState<InsightItem[]>([]);
@@ -40,26 +51,42 @@ const ChatPanel = () => {
     });
   }, []);
 
+  // Load messages and insights when project changes
   useEffect(() => {
-    fetchSources().then((list) => {
-      setSelectedSourcesCount(list.filter((s) => s.selected).length);
-    }).catch(() => setSelectedSourcesCount(0));
-  }, [insights]);
+    if (!currentProjectId) {
+      setMessages([]);
+      setInsights([]);
+      setSelectedSourcesCount(0);
+      return;
+    }
+    (async () => {
+      const [msgList, insightList] = await Promise.all([
+        getChatMessages(currentProjectId),
+        getProjectInsights(currentProjectId),
+      ]);
+      setMessages(msgList.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })));
+      setInsights(insightList);
+      const sources = await fetchSources(currentProjectId);
+      setSelectedSourcesCount(sources.filter((s) => s.selected).length);
+    })();
+  }, [currentProjectId]);
 
-  const refreshSourceCount = () => {
-    fetchSources().then((list) => setSelectedSourcesCount(list.filter((s) => s.selected).length)).catch(() => {});
-  };
+  const refreshSourceCount = useCallback(() => {
+    if (!currentProjectId) return;
+    fetchSources(currentProjectId).then((list) => setSelectedSourcesCount(list.filter((s) => s.selected).length)).catch(() => {});
+  }, [currentProjectId]);
 
   useEffect(() => {
     window.addEventListener("focus", refreshSourceCount);
     return () => window.removeEventListener("focus", refreshSourceCount);
-  }, []);
+  }, [refreshSourceCount]);
 
   const handleAnalyze = async () => {
+    if (!currentProjectId) return;
     setAnalyzeError(null);
     setAnalyzing(true);
     try {
-      const sources = await fetchSources();
+      const sources = await fetchSources(currentProjectId);
       const selectedIds = sources.filter((s) => s.selected).map((s) => s.id);
       if (selectedIds.length === 0) {
         setAnalyzeError("Select at least one source in the left panel.");
@@ -68,6 +95,7 @@ const ChatPanel = () => {
       const { insights: list } = await analyzeSources(selectedIds);
       setInsights(list || []);
       setSelectedSourcesCount(selectedIds.length);
+      await saveProjectInsights(currentProjectId, list || []);
     } catch (e) {
       setAnalyzeError(e instanceof Error ? e.message : "Analysis failed");
       setInsights([]);
@@ -98,7 +126,7 @@ const ChatPanel = () => {
   };
 
   const handleSend = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || !currentProjectId) return;
     
     const userMessage = input;
     setInput("");
@@ -114,11 +142,13 @@ const ChatPanel = () => {
     ]);
 
     try {
-      const sources = await fetchSources();
+      await appendChatMessage(currentProjectId, "user", userMessage);
+      const sources = await fetchSources(currentProjectId);
       const selectedIds = sources.filter((s) => s.selected).map((s) => s.id);
       
       const response = await chatWithAI(userMessage, selectedIds, messages);
       
+      await appendChatMessage(currentProjectId, "assistant", response.content);
       setMessages([
         ...newMessages,
         { role: "assistant", content: response.content }
