@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Send, ThumbsUp, ThumbsDown, Copy, Pin, SlidersHorizontal, MoreVertical, Sparkles, ExternalLink } from "lucide-react";
+import { toast } from "sonner";
 import { fetchSources, analyzeSources, getJiraConfig, chatWithAI } from "@/lib/api";
 import type { InsightItem } from "@/lib/api";
 import JiraConfigModal from "@/components/JiraConfigModal";
@@ -30,6 +31,7 @@ const ChatPanel = () => {
   const [createJiraInsight, setCreateJiraInsight] = useState<{ summary: string; description: string } | null>(null);
   const [lastProjectKey, setLastProjectKey] = useState("");
   const [selectedSourcesCount, setSelectedSourcesCount] = useState(0);
+  const [feedbackByIndex, setFeedbackByIndex] = useState<Record<number, "up" | "down">>({});
 
   useEffect(() => {
     getJiraConfig().then((c) => {
@@ -141,6 +143,33 @@ const ChatPanel = () => {
     });
   };
 
+  const isThinking =
+    messages.length > 0 &&
+    messages[messages.length - 1].role === "assistant" &&
+    messages[messages.length - 1].content === "Thinking...";
+
+  const handleCopy = (content: string) => {
+    navigator.clipboard.writeText(content);
+    toast.success("Copied to clipboard");
+  };
+
+  const handlePin = (content: string) => {
+    navigator.clipboard.writeText(content);
+    toast.success("Saved to clipboard");
+  };
+
+  const setFeedback = (index: number, value: "up" | "down") => {
+    setFeedbackByIndex((prev) => {
+      const next = { ...prev };
+      if (prev[index] === value) {
+        delete next[index];
+        return next;
+      }
+      next[index] = value;
+      return next;
+    });
+  };
+
   return (
     <main className="flex-1 flex flex-col min-w-0 panel-bg">
       {/* Header */}
@@ -201,20 +230,46 @@ const ChatPanel = () => {
                 <div className="text-sm leading-relaxed text-foreground whitespace-pre-line">
                   {renderContent(msg.content)}
                 </div>
-                <div className="flex items-center gap-1 pt-1">
-                  <button className="p-1.5 rounded hover:bg-muted transition-colors" title="Save to Note">
-                    <Pin className="w-3.5 h-3.5 text-muted-foreground" />
-                  </button>
-                  <button className="p-1.5 rounded hover:bg-muted transition-colors" title="Copy">
-                    <Copy className="w-3.5 h-3.5 text-muted-foreground" />
-                  </button>
-                  <button className="p-1.5 rounded hover:bg-muted transition-colors">
-                    <ThumbsUp className="w-3.5 h-3.5 text-muted-foreground" />
-                  </button>
-                  <button className="p-1.5 rounded hover:bg-muted transition-colors">
-                    <ThumbsDown className="w-3.5 h-3.5 text-muted-foreground" />
-                  </button>
-                </div>
+                {msg.content !== "Thinking..." && (
+                  <div className="flex items-center gap-1 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => handlePin(msg.content)}
+                      className="p-1.5 rounded hover:bg-muted transition-colors"
+                      title="Save to clipboard"
+                    >
+                      <Pin className="w-3.5 h-3.5 text-muted-foreground" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(msg.content)}
+                      className="p-1.5 rounded hover:bg-muted transition-colors"
+                      title="Copy"
+                    >
+                      <Copy className="w-3.5 h-3.5 text-muted-foreground" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFeedback(i, "up")}
+                      className={`p-1.5 rounded transition-colors ${
+                        feedbackByIndex[i] === "up" ? "bg-primary/15 text-primary" : "hover:bg-muted text-muted-foreground"
+                      }`}
+                      title="Good response"
+                    >
+                      <ThumbsUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFeedback(i, "down")}
+                      className={`p-1.5 rounded transition-colors ${
+                        feedbackByIndex[i] === "down" ? "bg-destructive/15 text-destructive" : "hover:bg-muted text-muted-foreground"
+                      }`}
+                      title="Bad response"
+                    >
+                      <ThumbsDown className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex justify-end">
@@ -226,20 +281,21 @@ const ChatPanel = () => {
           </div>
         ))}
 
-        {/* Suggestions */}
-        <div className="space-y-2 pt-2">
-          {suggestions.map((s, i) => (
-            <button
-              key={i}
-              onClick={() => {
-                setInput(s);
-              }}
-              className="block w-fit text-left text-sm px-4 py-2.5 suggestion-bg rounded-xl suggestion-hover transition-colors text-foreground border border-border"
-            >
-              {s}
-            </button>
-          ))}
-        </div>
+        {/* Suggestions: hidden while AI is thinking, smaller size */}
+        {!isThinking && (
+          <div className="space-y-1.5 pt-2">
+            {suggestions.map((s, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setInput(s)}
+                className="block w-fit text-left text-xs px-3 py-2 suggestion-bg rounded-lg suggestion-hover transition-colors text-muted-foreground hover:text-foreground border border-border"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Input */}
@@ -264,7 +320,7 @@ const ChatPanel = () => {
           </button>
         </div>
         <p className="text-[11px] text-muted-foreground text-center mt-2">
-          tofuOS can make mistakes. Please verify the responses.
+          Chat uses your selected sources as context. tofuOS can make mistakes — verify responses.
         </p>
       </div>
 
