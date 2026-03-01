@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useTheme } from "next-themes";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProject } from "@/contexts/ProjectContext";
 import {
@@ -23,6 +24,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
@@ -45,9 +47,13 @@ import {
   FolderOpen,
   Pencil,
   Trash2,
+  Sun,
+  Moon,
+  Monitor,
 } from "lucide-react";
 
 const Settings = () => {
+  const { theme, setTheme } = useTheme();
   const { user, signOut } = useAuth();
   const { projects: _projects, setCurrentProjectId, refreshProjects, currentProjectId } = useProject();
   const [jiraConfig, setJiraConfig] = useState<JiraConfig | null>(null);
@@ -152,6 +158,48 @@ const Settings = () => {
               <LogOut className="w-4 h-4" />
               Sign out
             </Button>
+          </CardContent>
+        </Card>
+
+        {/* Appearance */}
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Sun className="w-4 h-4" />
+              Appearance
+            </CardTitle>
+            <CardDescription>
+              Choose light mode, dark mode, or match your system preference.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <RadioGroup
+              value={theme ?? "system"}
+              onValueChange={(v) => setTheme(v)}
+              className="flex gap-3"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="light" id="theme-light" />
+                <Label htmlFor="theme-light" className="flex items-center gap-2 cursor-pointer font-normal">
+                  <Sun className="h-4 w-4 text-muted-foreground" />
+                  Light
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="dark" id="theme-dark" />
+                <Label htmlFor="theme-dark" className="flex items-center gap-2 cursor-pointer font-normal">
+                  <Moon className="h-4 w-4 text-muted-foreground" />
+                  Dark
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="system" id="theme-system" />
+                <Label htmlFor="theme-system" className="flex items-center gap-2 cursor-pointer font-normal">
+                  <Monitor className="h-4 w-4 text-muted-foreground" />
+                  System
+                </Label>
+              </div>
+            </RadioGroup>
           </CardContent>
         </Card>
 

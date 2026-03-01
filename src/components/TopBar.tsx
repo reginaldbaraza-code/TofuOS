@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Plus, BarChart3, Share2, Settings, ChevronDown, LogOut, FolderOpen, Pencil, Trash2, Bot } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProject } from "@/contexts/ProjectContext";
 import { updateProject, deleteProject, type Project } from "@/lib/api";
@@ -264,7 +265,8 @@ const TopBar = () => {
           <Settings className="w-4 h-4" />
           Settings
         </Link>
-        <div className="hidden sm:flex gap-1">
+        <ThemeSwitcher />
+        <div className="hidden sm:flex gap-1 items-center">
           <Link
             href="/settings"
             className="md:hidden p-2 text-foreground hover:bg-muted rounded-lg transition-colors"
