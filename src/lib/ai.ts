@@ -1,6 +1,6 @@
 /**
- * Unified AI layer: Gemini first, Groq fallback on rate limit.
- * Set GROQ_API_KEY in env to enable free Groq fallback when Gemini is limited.
+ * Unified AI layer: Groq first, Gemini fallback on rate limit.
+ * Set GROQ_API_KEY in env for primary; GOOGLE_GEMINI_API_KEY for backup when Groq is limited.
  */
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import {
@@ -9,7 +9,7 @@ import {
 } from "@/lib/gemini";
 
 export const QUOTA_EXCEEDED_MESSAGE =
-  "AI rate limit or quota exceeded. If you set GROQ_API_KEY in .env.local, the app will automatically use Groq when Gemini is limited. Otherwise wait a few minutes and try again.";
+  "AI rate limit or quota exceeded. If you set GOOGLE_GEMINI_API_KEY in .env.local, the app will automatically use Gemini when Groq is limited. Otherwise wait a few minutes and try again.";
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_MODEL = "llama-3.3-70b-versatile";
@@ -85,8 +85,8 @@ async function callGemini(messages: ChatMessage[]): Promise<string> {
 }
 
 /**
- * Generate a completion from a list of messages. Tries Gemini first;
- * if Gemini returns a rate-limit/503 error and GROQ_API_KEY is set, uses Groq.
+ * Generate a completion from a list of messages. Tries Groq first;
+ * if Groq returns a rate-limit/503 error and GOOGLE_GEMINI_API_KEY is set, uses Gemini.
  */
 export async function generateWithFallback(messages: ChatMessage[]): Promise<string> {
   const geminiKey = process.env.GOOGLE_GEMINI_API_KEY?.trim();
@@ -98,15 +98,15 @@ export async function generateWithFallback(messages: ChatMessage[]): Promise<str
     );
   }
 
-  if (geminiKey) {
+  if (groqKey) {
     try {
-      return await callGemini(messages);
-    } catch (e) {
-      if (!isRateLimitError(e) || !groqKey) throw e;
-      console.warn("[AI] Gemini rate limited or unavailable, falling back to Groq.");
       return await callGroq(messages);
+    } catch (e) {
+      if (!isRateLimitError(e) || !geminiKey) throw e;
+      console.warn("[AI] Groq rate limited or unavailable, falling back to Gemini.");
+      return await callGemini(messages);
     }
   }
 
-  return await callGroq(messages);
+  return await callGemini(messages);
 }
