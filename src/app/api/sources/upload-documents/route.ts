@@ -10,6 +10,18 @@ function truncate(text: string, max: number): string {
   return text.slice(0, max) + '\n\n[... truncated for length ...]';
 }
 
+/**
+ * Sanitize extracted text before storing it.
+ *
+ * We escape all backslashes so there are no raw `\uXXXX` sequences that could
+ * be interpreted as Unicode escapes by downstream systems (e.g. Postgres /
+ * JSON parsers) and cause "unsupported Unicode escape sequence" errors.
+ */
+function sanitizeExtractedText(s: string): string {
+  if (typeof s !== "string" || !s.length) return s;
+  return s.replace(/\\/g, "\\\\");
+}
+
 export async function POST(req: Request) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -56,16 +68,23 @@ export async function POST(req: Request) {
           const arrayBuffer = await file.arrayBuffer();
           const pdf = await getDocumentProxy(new Uint8Array(arrayBuffer));
           const { text: rawText } = await extractText(pdf, { mergePages: true });
-          content = rawText && String(rawText).trim() ? truncate(String(rawText).trim(), MAX_PER_SOURCE) : null;
+          const cleaned = rawText ? sanitizeExtractedText(String(rawText).trim()) : '';
+          content = cleaned ? truncate(cleaned, MAX_PER_SOURCE) : null;
           if (!content) console.warn('[upload-documents] PDF produced no text:', name);
         } else if (lower.endsWith('.txt') || file.type === 'text/plain') {
           const text = await file.text();
-          content = truncate(text, MAX_PER_SOURCE);
+          content = truncate(sanitizeExtractedText(text), MAX_PER_SOURCE);
         }
         // .doc, .docx, .xls, .xlsx: no extraction for now; source is still created with content null
       } catch (e) {
-        console.error('Extract error for', name, e);
-        content = null;
+        const errMsg = e instanceof Error ? e.message : String(e);
+        if (errMsg.includes('Unicode escape') || errMsg.includes('unicode escape')) {
+          console.warn('[upload-documents] PDF parse skipped (Unicode escape issue):', name);
+          content = null;
+        } else {
+          console.error('Extract error for', name, e);
+          content = null;
+        }
       }
 
       const type = lower.endsWith('.pdf') ? 'pdf' : 'document';
