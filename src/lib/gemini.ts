@@ -28,7 +28,10 @@ function isRateLimitError(error: unknown): boolean {
     message.includes("429") ||
     message.includes("Too Many Requests") ||
     message.includes("quota") ||
-    message.includes("Quota exceeded")
+    message.includes("Quota exceeded") ||
+    message.includes("503") ||
+    message.includes("Service Unavailable") ||
+    message.includes("high demand")
   );
 }
 
