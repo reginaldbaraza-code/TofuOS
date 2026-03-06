@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from "react";
-import { Send, ThumbsUp, ThumbsDown, Copy, Pin, Search } from "lucide-react";
+import { Send, ThumbsUp, ThumbsDown, Copy, Pin, Search, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import {
   fetchSources,
@@ -9,8 +9,10 @@ import {
   getChatMessages,
   appendChatMessage,
   searchProject,
+  getJiraConfig,
 } from "@/lib/api";
 import type { InsightItem, InsightStatus, Source, ChatMessage } from "@/lib/api";
+import CreateJiraModal from "@/components/CreateJiraModal";
 import { useProject } from "@/contexts/ProjectContext";
 import {
   Dialog,
@@ -59,6 +61,9 @@ const ChatPanel = () => {
   const [selectedSourceNames, setSelectedSourceNames] = useState<string[]>([]);
   const [feedbackByIndex, setFeedbackByIndex] = useState<Record<number, "up" | "down">>({});
   const [insightDetail, setInsightDetail] = useState<InsightItem | null>(null);
+  const [createJiraOpen, setCreateJiraOpen] = useState(false);
+  const [createJiraContent, setCreateJiraContent] = useState<{ summary: string; description: string } | null>(null);
+  const [lastJiraProjectKey, setLastJiraProjectKey] = useState("");
 
   // Load messages and source count when project changes
   useEffect(() => {
@@ -92,6 +97,13 @@ const ChatPanel = () => {
     window.addEventListener("focus", refreshSourceCount);
     return () => window.removeEventListener("focus", refreshSourceCount);
   }, [refreshSourceCount]);
+
+  // Load Jira project key when opening Create Jira modal
+  useEffect(() => {
+    if (createJiraOpen) {
+      getJiraConfig().then((c) => setLastJiraProjectKey(c?.lastProjectKey ?? ""));
+    }
+  }, [createJiraOpen]);
 
   const runSearch = useCallback(() => {
     if (!currentProjectId || !searchQuery.trim()) {
@@ -175,6 +187,13 @@ const ChatPanel = () => {
   const handlePin = (content: string) => {
     navigator.clipboard.writeText(content);
     toast.success("Saved to clipboard");
+  };
+
+  const handleCreateJiraFromMessage = (content: string) => {
+    const firstLine = content.split(/\n/)[0]?.trim() ?? "";
+    const summary = firstLine.length > 0 ? firstLine.slice(0, 255) : content.slice(0, 255);
+    setCreateJiraContent({ summary, description: content });
+    setCreateJiraOpen(true);
   };
 
   const setFeedback = (index: number, value: "up" | "down") => {
@@ -346,6 +365,15 @@ const ChatPanel = () => {
                   <div className="flex items-center gap-1 pt-1 flex-wrap">
                     <button
                       type="button"
+                      onClick={() => handleCreateJiraFromMessage(msg.content)}
+                      className="p-1.5 rounded hover:bg-muted transition-colors flex items-center gap-1"
+                      title="Create Jira ticket"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground hidden sm:inline">Jira</span>
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => handlePin(msg.content)}
                       className="p-1.5 rounded hover:bg-muted transition-colors"
                       title="Save to clipboard"
@@ -449,6 +477,16 @@ const ChatPanel = () => {
           Chat uses your selected sources as context. tofuOS can make mistakes — verify responses.
         </p>
       </div>
+
+      <CreateJiraModal
+        key={createJiraOpen && createJiraContent ? `jira-chat-${createJiraContent.summary.slice(0, 20)}` : "jira-chat-closed"}
+        open={createJiraOpen}
+        onOpenChange={setCreateJiraOpen}
+        insight={createJiraContent}
+        initialProjectKey={lastJiraProjectKey}
+        projectId={currentProjectId}
+        onCreated={() => toast.success("Jira ticket created")}
+      />
     </main>
   );
 };
