@@ -226,7 +226,7 @@ const Settings = () => {
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-foreground">Jira</p>
                   <p className="text-xs text-muted-foreground">
-                    Create tickets from insights in the Chat panel
+                    Create tickets from insights in Studio
                   </p>
                   {jiraConfig?.configured && jiraConfig.domain && (
                     <p className="text-xs text-muted-foreground mt-2">

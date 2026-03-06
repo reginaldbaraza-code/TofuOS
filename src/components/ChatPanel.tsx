@@ -1,29 +1,17 @@
 'use client';
 
 import { useState, useEffect, useCallback } from "react";
-import { Send, ThumbsUp, ThumbsDown, Copy, Pin, Sparkles, ExternalLink, MessageCircle, MoreVertical, Trash2, Search, ChevronUp, ChevronDown, Info } from "lucide-react";
+import { Send, ThumbsUp, ThumbsDown, Copy, Pin, Search } from "lucide-react";
 import { toast } from "sonner";
 import {
   fetchSources,
-  analyzeSources,
-  getJiraConfig,
   chatWithAI,
-  getProjectInsights,
-  saveProjectInsights,
   getChatMessages,
   appendChatMessage,
   searchProject,
 } from "@/lib/api";
 import type { InsightItem, InsightStatus, Source, ChatMessage } from "@/lib/api";
 import { useProject } from "@/contexts/ProjectContext";
-import JiraConfigModal from "@/components/JiraConfigModal";
-import CreateJiraModal from "@/components/CreateJiraModal";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -65,48 +53,26 @@ const ChatPanel = () => {
   const { currentProjectId, currentProject } = useProject();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [insights, setInsights] = useState<InsightItem[]>([]);
-  const [suggestedPrompts, setSuggestedPrompts] = useState<string[]>([]);
-  const [insightStatusFilter, setInsightStatusFilter] = useState<InsightStatus | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<{ sources: Source[]; messages: ChatMessage[]; insights: InsightItem[] } | null>(null);
-  const [analyzing, setAnalyzing] = useState(false);
-  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
-  const [jiraConfigured, setJiraConfigured] = useState(false);
-  const [jiraConfigModalOpen, setJiraConfigModalOpen] = useState(false);
-  const [createJiraModalOpen, setCreateJiraModalOpen] = useState(false);
-  const [createJiraInsight, setCreateJiraInsight] = useState<{ summary: string; description: string } | null>(null);
-  const [lastProjectKey, setLastProjectKey] = useState("");
   const [selectedSourcesCount, setSelectedSourcesCount] = useState(0);
   const [selectedSourceNames, setSelectedSourceNames] = useState<string[]>([]);
   const [feedbackByIndex, setFeedbackByIndex] = useState<Record<number, "up" | "down">>({});
   const [insightDetail, setInsightDetail] = useState<InsightItem | null>(null);
 
-  useEffect(() => {
-    getJiraConfig().then((c) => {
-      setJiraConfigured(!!c?.configured);
-      if (c?.lastProjectKey) setLastProjectKey(c.lastProjectKey);
-    });
-  }, []);
-
-  // Load messages and insights when project changes
+  // Load messages and source count when project changes
   useEffect(() => {
     if (!currentProjectId) {
       setMessages([]);
-      setInsights([]);
-      setAnalyzeError(null);
       setSelectedSourcesCount(0);
       return;
     }
-    setAnalyzeError(null);
     (async () => {
-      const [msgList, insightList, sourcesList] = await Promise.all([
+      const [msgList, sourcesList] = await Promise.all([
         getChatMessages(currentProjectId),
-        getProjectInsights(currentProjectId),
         fetchSources(currentProjectId),
       ]);
       setMessages(msgList.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })));
-      setInsights(insightList);
       const selected = sourcesList.filter((s) => s.selected);
       setSelectedSourcesCount(selected.length);
       setSelectedSourceNames(selected.map((s) => s.name));
@@ -126,116 +92,6 @@ const ChatPanel = () => {
     window.addEventListener("focus", refreshSourceCount);
     return () => window.removeEventListener("focus", refreshSourceCount);
   }, [refreshSourceCount]);
-
-  const handleAnalyze = async () => {
-    if (!currentProjectId) return;
-    setAnalyzeError(null);
-    setAnalyzing(true);
-    try {
-      const sources = await fetchSources(currentProjectId);
-      const selectedIds = sources.filter((s) => s.selected).map((s) => s.id);
-      if (selectedIds.length === 0) {
-        setAnalyzeError("Select at least one source in the left panel.");
-        return;
-      }
-      const { insights: list, suggestedPrompts: prompts } = await analyzeSources(selectedIds);
-      setInsights((list || []).map((i) => ({ ...i, status: (i.status ?? "not_started") as InsightStatus })));
-      setSuggestedPrompts(Array.isArray(prompts) ? prompts : []);
-      setSelectedSourcesCount(selectedIds.length);
-      await saveProjectInsights(currentProjectId, list || []);
-      toast.success("Analysis complete. Try a suggested prompt below.");
-    } catch (e) {
-      setAnalyzeError(e instanceof Error ? e.message : "Analysis failed");
-      setInsights([]);
-      setSuggestedPrompts([]);
-    } finally {
-      setAnalyzing(false);
-    }
-  };
-
-  const handleCreateJiraClick = (insight: InsightItem) => {
-    const payload = { summary: insight.summary, description: insight.description };
-    if (!jiraConfigured) {
-      setJiraConfigModalOpen(true);
-      setCreateJiraInsight(payload);
-    } else {
-      setCreateJiraInsight(payload);
-      setCreateJiraModalOpen(true);
-    }
-  };
-
-  const handleJiraConfigSaved = () => {
-    getJiraConfig().then((c) => {
-      setJiraConfigured(!!c?.configured);
-      if (c?.lastProjectKey) setLastProjectKey(c.lastProjectKey);
-    });
-    if (createJiraInsight) {
-      setCreateJiraModalOpen(true);
-    }
-  };
-
-  const handleJiraCreated = useCallback(
-    (url: string, issueKey: string, summary: string) => {
-      setLastProjectKey((prev) => issueKey.split("-")[0] || prev);
-      getJiraConfig().then((c) => {
-        if (c?.lastProjectKey) setLastProjectKey(c.lastProjectKey);
-      });
-    },
-    []
-  );
-
-  const handleDeleteInsight = async (index: number) => {
-    if (!currentProjectId) return;
-    const next = insights.filter((_, i) => i !== index);
-    setInsights(next);
-    try {
-      await saveProjectInsights(currentProjectId, next);
-      toast.success("Insight removed");
-    } catch (e) {
-      toast.error("Failed to remove insight");
-      setInsights(insights);
-    }
-  };
-
-  const handleAskAI = (insight: InsightItem) => {
-    setInput(`Can you elaborate on this insight or suggest next steps? "${insight.summary}"`);
-    toast.info("Question added to chat — send to get a response");
-  };
-
-  const handleCopyFullInsight = (insight: InsightItem) => {
-    const text = `${insight.summary}\n\n${insight.description}${insight.action ? `\n\nAction: ${insight.action}` : ""}`;
-    navigator.clipboard.writeText(text);
-    toast.success("Copied summary and description to clipboard");
-  };
-
-  const setInsightStatus = async (index: number, status: InsightStatus) => {
-    if (!currentProjectId) return;
-    const next = insights.map((insight, i) => (i === index ? { ...insight, status } : insight));
-    setInsights(next);
-    try {
-      await saveProjectInsights(currentProjectId, next);
-    } catch {
-      setInsights(insights);
-    }
-  };
-
-  const moveInsight = async (index: number, delta: number) => {
-    if (!currentProjectId) return;
-    const next = [...insights];
-    const j = index + delta;
-    if (j < 0 || j >= next.length) return;
-    [next[index], next[j]] = [next[j], next[index]];
-    setInsights(next);
-    try {
-      await saveProjectInsights(currentProjectId, next);
-    } catch {
-      setInsights(insights);
-    }
-  };
-
-  const filteredInsights = insightStatusFilter === "all"
-    ? insights
-    : insights.filter((i) => (i.status ?? "not_started") === insightStatusFilter);
 
   const runSearch = useCallback(() => {
     if (!currentProjectId || !searchQuery.trim()) {
@@ -335,23 +191,10 @@ const ChatPanel = () => {
 
   return (
     <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden panel-bg">
-      {/* Header: single Analyze button, no placeholder Filters/More */}
+      {/* Header: Chat title + Search only */}
       <div className="px-3 sm:px-6 py-3 border-b border-border flex-shrink-0 space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-sm font-semibold text-foreground">Chat</h2>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={handleAnalyze}
-              disabled={analyzing}
-              className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg text-sm font-medium tofu-gradient text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-70"
-              aria-label={analyzing ? "Analyzing sources" : "Analyze sources"}
-              title={analyzing ? "Analyzing…" : "Analyze selected sources"}
-            >
-              <Sparkles className="w-4 h-4 shrink-0" />
-              <span className="hidden sm:inline">{analyzing ? "Analyzing…" : "Analyze sources"}</span>
-              <span className="sm:hidden">{analyzing ? "…" : "Analyze"}</span>
-            </button>
-          </div>
         </div>
         {/* Search project */}
         {currentProjectId && (
@@ -406,7 +249,14 @@ const ChatPanel = () => {
               <div>
                 <p className="text-[10px] font-medium text-muted-foreground uppercase mb-1">Insights</p>
                 {searchResults.insights.slice(0, 3).map((i, idx) => (
-                  <p key={idx} className="text-xs truncate">{i.summary}</p>
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setInsightDetail(i)}
+                    className="block w-full text-left text-xs truncate hover:underline text-foreground"
+                  >
+                    {i.summary}
+                  </button>
                 ))}
                 {searchResults.insights.length > 3 && <p className="text-xs text-muted-foreground">+{searchResults.insights.length - 3} more</p>}
               </div>
@@ -415,139 +265,7 @@ const ChatPanel = () => {
         )}
       </div>
 
-      {/* Insights list with status filter and one Export to Jira per row, rest in More */}
-      {insights.length > 0 && (
-        <div className="px-3 sm:px-6 py-4 border-b border-border bg-muted/30 flex-shrink-0 flex flex-col min-h-0 max-h-[38vh]">
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-3 flex-shrink-0">
-            <h3 className="text-sm font-medium text-foreground">Insights (project manager)</h3>
-            <select
-              value={insightStatusFilter}
-              onChange={(e) => setInsightStatusFilter(e.target.value as InsightStatus | "all")}
-              className="text-xs rounded-md border border-border bg-background px-2 py-1 text-foreground"
-              aria-label="Filter by status"
-            >
-              <option value="all">All</option>
-              <option value="not_started">{insightStatusColors.not_started.label}</option>
-              <option value="in_progress">{insightStatusColors.in_progress.label}</option>
-              <option value="done">{insightStatusColors.done.label}</option>
-            </select>
-          </div>
-          <ul className="space-y-2 overflow-y-auto min-h-0 flex-1">
-            {filteredInsights.map((insight, i) => {
-              const globalIndex = insights.indexOf(insight);
-              const status = insight.status ?? "not_started";
-              return (
-              <li
-                key={globalIndex}
-                className={cn(
-                  "flex flex-col sm:flex-row sm:items-start gap-2 text-sm text-foreground bg-background border border-border rounded-lg px-3 py-2 border-l-4",
-                  insightStatusColors[status].border
-                )}
-              >
-                <div className="flex-1 min-w-0 flex items-center gap-2">
-                  <div className="flex flex-col gap-0 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => moveInsight(globalIndex, -1)}
-                      disabled={globalIndex === 0}
-                      className="p-0.5 rounded hover:bg-muted disabled:opacity-30"
-                      aria-label="Move up"
-                    >
-                      <ChevronUp className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => moveInsight(globalIndex, 1)}
-                      disabled={globalIndex === insights.length - 1}
-                      className="p-0.5 rounded hover:bg-muted disabled:opacity-30"
-                      aria-label="Move down"
-                    >
-                      <ChevronDown className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  <span
-                    className={cn(
-                      "inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium shrink-0",
-                      insightStatusColors[status].badge
-                    )}
-                    title="Status"
-                  >
-                    {insightStatusColors[status].label}
-                  </span>
-                  <select
-                    value={status}
-                    onChange={(e) => setInsightStatus(globalIndex, e.target.value as InsightStatus)}
-                    className="text-xs rounded border border-border bg-muted/50 px-2 py-0.5 text-foreground"
-                    aria-label="Set status"
-                    title="Change status"
-                  >
-                    {(["not_started", "in_progress", "done"] as const).map((s) => (
-                      <option key={s} value={s}>{insightStatusColors[s].label}</option>
-                    ))}
-                  </select>
-                  <span
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setInsightDetail(insight)}
-                    onKeyDown={(e) => e.key === "Enter" && setInsightDetail(insight)}
-                    className="min-w-0 cursor-pointer hover:underline focus:outline-none focus:underline"
-                  >
-                    <span className="block truncate">{insight.summary}</span>
-                    {insight.action && (
-                      <span className="block truncate text-xs text-muted-foreground font-normal mt-0.5">→ {insight.action}</span>
-                    )}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => handleCreateJiraClick(insight)}
-                    className="flex items-center justify-center sm:justify-start gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                    title="Export to Jira"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    Export to Jira
-                  </button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        type="button"
-                        className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground"
-                        aria-label="More actions"
-                      >
-                        <MoreVertical className="w-4 h-4" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleAskAI(insight)} className="flex items-center gap-2 cursor-pointer">
-                        <MessageCircle className="w-4 h-4" />
-                        Ask AI / Follow up
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setInsightDetail(insight)} className="flex items-center gap-2 cursor-pointer">
-                        <Info className="w-4 h-4" />
-                        View details
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleCopyFullInsight(insight)} className="flex items-center gap-2 cursor-pointer">
-                        <Copy className="w-4 h-4" />
-                        Copy full (summary + description + action)
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleDeleteInsight(globalIndex)}
-                        className="flex items-center gap-2 text-destructive focus:text-destructive cursor-pointer"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Delete insight
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </li>
-            );})}
-          </ul>
-        </div>
-      )}
-
-      {/* Insight detail popup */}
+      {/* Insight detail popup (from search only) */}
       <Dialog open={!!insightDetail} onOpenChange={(open) => !open && setInsightDetail(null)}>
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           {insightDetail && (
@@ -595,10 +313,6 @@ const ChatPanel = () => {
         </DialogContent>
       </Dialog>
 
-      {analyzeError && (
-        <div className="px-3 sm:px-6 py-2 text-sm text-destructive flex-shrink-0">{analyzeError}</div>
-      )}
-
       {/* Messages */}
       <div className="flex-1 min-h-0 overflow-y-auto px-3 sm:px-6 py-4 sm:py-6 space-y-6">
         {messages.length === 0 && !isThinking && (
@@ -609,13 +323,13 @@ const ChatPanel = () => {
                 <p className="mb-2">No sources in this project yet.</p>
                 <ol className="text-left list-decimal list-inside space-y-1 text-xs">
                   <li>Add sources in the left panel (documents, links, reviews)</li>
-                  <li>Run &quot;Analyze sources&quot; to get PM insights</li>
-                  <li>Chat here or export insights to Jira</li>
+                  <li>Use Studio to analyze sources and generate documents</li>
+                  <li>Chat here using selected sources as context</li>
                 </ol>
               </>
             ) : (
               <>
-                <p>Add sources in the left panel, then ask a question here or run &quot;Analyze sources&quot; to get AI insights.</p>
+                <p>Ask a question about your selected sources, or use Studio to analyze and generate documents.</p>
                 <p className="mt-2 text-xs">Using {selectedSourcesCount} selected source{selectedSourcesCount !== 1 ? "s" : ""} as context.</p>
               </>
             )}
@@ -679,24 +393,8 @@ const ChatPanel = () => {
           </div>
         ))}
 
-        {/* Suggested prompts after analysis */}
-        {suggestedPrompts.length > 0 && !isThinking && (
-          <div className="space-y-1.5 pt-2">
-            <p className="text-xs font-medium text-muted-foreground">Suggested follow-ups</p>
-            {suggestedPrompts.map((s, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => setInput(s)}
-                className="block w-fit text-left text-xs px-3 py-2 suggestion-bg rounded-lg suggestion-hover transition-colors text-muted-foreground hover:text-foreground border border-border"
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        )}
         {/* Default suggestions */}
-        {!isThinking && suggestedPrompts.length === 0 && (
+        {!isThinking && (
           <div className="space-y-1.5 pt-2">
             {suggestions.map((s, i) => (
               <button
@@ -751,24 +449,6 @@ const ChatPanel = () => {
           Chat uses your selected sources as context. tofuOS can make mistakes — verify responses.
         </p>
       </div>
-
-      <JiraConfigModal
-        open={jiraConfigModalOpen}
-        onOpenChange={setJiraConfigModalOpen}
-        onSaved={handleJiraConfigSaved}
-      />
-      <CreateJiraModal
-        key={createJiraModalOpen && createJiraInsight ? `jira-${createJiraInsight.summary}` : "jira-closed"}
-        open={createJiraModalOpen}
-        onOpenChange={setCreateJiraModalOpen}
-        insight={createJiraInsight}
-        initialProjectKey={lastProjectKey}
-        projectId={currentProjectId}
-        onCreated={(url, issueKey, summary) => {
-          setLastProjectKey(issueKey.split("-")[0] || lastProjectKey);
-          handleJiraCreated(url, issueKey, summary);
-        }}
-      />
     </main>
   );
 };

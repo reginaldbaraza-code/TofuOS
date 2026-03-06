@@ -76,18 +76,18 @@ Rules:
 
 ${sourceContext}
 
-Generate exactly 4 insights. For each insight return a JSON object with:
+Generate a number of insights that fits the sources: enough to cover the main problems and opportunities (typically 3–8). For each insight return a JSON object with:
 1. summary: Short title for the problem (suitable as a ticket title). E.g. "No direct access to end customers (PO hypothesis risk)".
 2. description: 2–3 sentences stating the problem and why it matters, with a specific reference to the source(s).
 3. action: One concrete, executable action to fix the problem. Format: "Who: what to do, by when or in what format." Must be something a team can do without further clarification.
 4. sourceNames: Array of exact source names from the headers above that this insight is based on.
 5. evidence: A direct quote or specific fact from the source(s) that supports this finding.
 
-Return a valid JSON object with a single key "insights" containing an array of 4 objects with keys "summary", "description", "action", "sourceNames", "evidence".
+Return a valid JSON object with a single key "insights" containing an array of objects (each with keys "summary", "description", "action", "sourceNames", "evidence"). Do not pad with extra insights; only include as many as are justified by the evidence.
 
 Example:
 {"insights": [
-  {"summary": "Discovery gap: no direct access to end customers", "description": "The PO reports making hypotheses from Germany about users in US/Indonesia with no way to validate; relies on secondhand input from market managers.", "action": "Product owner: Schedule 2–3 discovery interviews per market with real end users within the next sprint; assign an owner and add to backlog.", "sourceNames": ["Stefan.pdf"], "evidence": "'Finding those customers in a big corporation is super complicated.'"},
+  {"summary": "Discovery gap: no direct access to end customers", "description": "The PO reports...", "action": "Product owner: Schedule 2–3 discovery interviews...", "sourceNames": ["Stefan.pdf"], "evidence": "'Finding those customers...'"},
   ...
 ]}`;
 

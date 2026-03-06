@@ -20,9 +20,11 @@ import {
   Download,
   LayoutGrid,
   List,
+  Lightbulb,
 } from "lucide-react";
 import { fetchSources, generateStudioDocument } from "@/lib/api";
 import { useProject } from "@/contexts/ProjectContext";
+import InsightsModal from "@/components/InsightsModal";
 
 interface StudioItem {
   id: string;
@@ -32,6 +34,7 @@ interface StudioItem {
 }
 
 const studioItems: StudioItem[] = [
+  { id: "insights", label: "Analyze sources / Insights", icon: <Lightbulb className="w-4 h-4" />, color: "text-tofu-warm" },
   { id: "prd", label: "PRD", icon: <FileText className="w-4 h-4" />, color: "text-primary" },
   { id: "coding-rules", label: "AI Coding Rules & Standards", icon: <Code className="w-4 h-4" />, color: "text-tofu-warm" },
   { id: "api-docs", label: "API Documentation", icon: <BookOpen className="w-4 h-4" />, color: "text-primary" },
@@ -53,6 +56,7 @@ const StudioPanel = ({ mobile }: { mobile?: boolean }) => {
   const [loading, setLoading] = useState(false);
   const [output, setOutput] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [insightsModalOpen, setInsightsModalOpen] = useState(false);
 
   const loadSources = useCallback(async () => {
     if (!currentProjectId) {
@@ -76,6 +80,14 @@ const StudioPanel = ({ mobile }: { mobile?: boolean }) => {
   const handleCreateDocument = async () => {
     if (!activeItem) {
       setError("Select a document type above first.");
+      return;
+    }
+    if (activeItem === "insights") {
+      setInsightsModalOpen(true);
+      return;
+    }
+    if (selectedSourceIds.length === 0) {
+      setError("Select at least one source in the left panel. Documents are generated from your added sources.");
       return;
     }
     setError(null);
@@ -145,7 +157,14 @@ const StudioPanel = ({ mobile }: { mobile?: boolean }) => {
             <button
               key={item.id}
               type="button"
-              onClick={() => setActiveItem(activeItem === item.id ? null : item.id)}
+              onClick={() => {
+                if (item.id === "insights") {
+                  setInsightsModalOpen(true);
+                  setActiveItem(null);
+                } else {
+                  setActiveItem(activeItem === item.id ? null : item.id);
+                }
+              }}
               className={`flex items-center gap-2.5 p-3 rounded-xl text-left transition-all group ${
                 activeItem === item.id
                   ? "bg-primary/10 border border-primary/30"
@@ -199,7 +218,7 @@ const StudioPanel = ({ mobile }: { mobile?: boolean }) => {
               Studio output will be saved here.
             </p>
             <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-              Select a document type above, ensure sources are selected in the left panel, then click Create Document.
+              Select a document type above, select sources in the left panel, then click Create Document. Output is generated from your added sources.
             </p>
           </div>
         )}
@@ -214,6 +233,11 @@ const StudioPanel = ({ mobile }: { mobile?: boolean }) => {
           {loading ? "Generating…" : "Create Document"}
         </button>
       </div>
+      <InsightsModal
+        open={insightsModalOpen}
+        onOpenChange={setInsightsModalOpen}
+        projectId={currentProjectId}
+      />
     </aside>
   );
 };

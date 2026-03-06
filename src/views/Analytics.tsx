@@ -168,7 +168,7 @@ const Analytics = () => {
                     <span className="font-medium">{project.name}</span>
                     <span className="text-muted-foreground">
                       — {sourcesCount} source{sourcesCount !== 1 ? "s" : ""}
-                      {insightsCount === 0 && " · Run Analyze in Chat"}
+                      {insightsCount === 0 && " · Run Analyze in Studio"}
                       {insightsCount > 0 && exports.length === 0 && " · No Jira exports yet"}
                     </span>
                   </li>

@@ -27,17 +27,17 @@ function buildSourceContextWithContent(sources: { name: string; type: string; co
 }
 
 const DOCUMENT_PROMPTS: Record<string, string> = {
-  prd: `Write a Product Requirements Document (PRD). Include: problem statement, goals, user personas, functional requirements, success metrics, and out-of-scope. Use the sources as evidence. Output in clear sections with headers.`,
-  "coding-rules": `Create AI Coding Rules & Standards for the project. Include: code style, naming conventions, file structure, testing expectations, and any framework-specific rules. Base recommendations on the types of sources (e.g. app reviews, docs) where relevant.`,
-  "api-docs": `Generate API Documentation structure and sample content. Include: overview, authentication, endpoints with request/response examples, and error codes. Infer plausible API surface from the sources.`,
-  accessibility: `Write an Accessibility Compliance checklist and recommendations. Include: WCAG alignment, keyboard/screen reader support, contrast and focus states, and testing steps. Reference the sources for product context.`,
-  architecture: `Create an App Architecture Plan. Include: high-level diagram description, core modules, data flow, tech stack suggestions, and deployment approach. Use the sources to infer product scope.`,
-  "bug-fix": `Produce a Bug Investigation & Fix Plan. Include: how to reproduce, likely root causes, step-by-step fix plan, testing steps, and prevention. Use the sources as context for the product.`,
-  competitive: `Write a Competitive Analysis Report. Include: competitor overview, feature comparison, strengths/weaknesses, and recommendations. Use the sources to ground the analysis.`,
-  "journey-map": `Create a Customer Journey Map. Include: stages (awareness, consideration, use, support), touchpoints, pain points, and opportunities. Base it on the described sources (e.g. reviews, interviews).`,
-  "db-schema": `Propose a Database Schema Design. Include: main entities, relationships, key tables and columns, and indexing notes. Infer domain from the sources.`,
-  "feature-spec": `Write a Feature Implementation Spec. Include: scope, acceptance criteria, technical approach, and rough task breakdown. Use the sources to define the feature.`,
-  gtm: `Create a Go-to-Market Plan. Include: target audience, positioning, channels, launch phases, and success metrics. Use the sources for product and market context.`,
+  prd: `Write a Product Requirements Document (PRD) using ONLY the provided sources. Include: problem statement, goals, user personas, functional requirements, success metrics, and out-of-scope—all derived from and citing the source content.`,
+  "coding-rules": `Create AI Coding Rules & Standards using the project context from the sources. Include: code style, naming, file structure, testing—tailored to what the sources describe (e.g. stack, conventions).`,
+  "api-docs": `Generate API Documentation from the sources. Include: overview, authentication, endpoints with request/response examples. Infer the API surface from the actual content (docs, specs, or code references) in the sources.`,
+  accessibility: `Write an Accessibility Compliance checklist and recommendations using the product and context from the sources. Reference specific features or flows mentioned in the sources.`,
+  architecture: `Create an App Architecture Plan from the sources. Include: modules, data flow, tech stack, deployment—all inferred from the provided content.`,
+  "bug-fix": `Produce a Bug Investigation & Fix Plan using the sources. Base reproduction steps, root causes, and fix plan on the actual content (e.g. error reports, logs, descriptions).`,
+  competitive: `Write a Competitive Analysis Report using the sources. Competitors, features, and recommendations must come from the provided content (reviews, interviews, market docs).`,
+  "journey-map": `Create a Customer Journey Map from the sources. Stages, touchpoints, pain points, and opportunities must be derived from the source content (e.g. reviews, interviews).`,
+  "db-schema": `Propose a Database Schema Design from the sources. Entities, relationships, and tables must be inferred from the domain and content provided.`,
+  "feature-spec": `Write a Feature Implementation Spec from the sources. Scope, acceptance criteria, and technical approach must be grounded in the source content.`,
+  gtm: `Create a Go-to-Market Plan using the sources. Target audience, positioning, channels, and metrics must be derived from the provided content.`,
 };
 
 export async function POST(req: Request) {
@@ -63,6 +63,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: `Unknown document type: ${documentType}` }, { status: 400 });
     }
 
+    if (!sourceIds || !Array.isArray(sourceIds) || sourceIds.length === 0) {
+      return NextResponse.json(
+        { message: "Select at least one source. Studio documents are generated from your added sources." },
+        { status: 400 }
+      );
+    }
+
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     let sourceContext = "No sources selected.";
@@ -83,13 +90,13 @@ export async function POST(req: Request) {
       }
     }
 
-    const prompt = `You are a product and engineering assistant. The user has selected these sources. Below is the actual content extracted from each source (where available). Use this content to generate the document.
+    const prompt = `You are a product and engineering assistant. The user has selected specific sources; below is the actual content extracted from each source. You MUST generate the requested document using ONLY the information from these sources. Do not produce generic templates—every section must be grounded in the source content (quotes, data, or concrete details from the sources). If the sources do not contain enough information for a section, say so and summarise what is available.
 
 ${sourceContext}
 
 Task: ${instruction}
 
-Generate the full document. Use markdown for structure (headers, lists, code blocks where appropriate). Base your output on the source content above. Do not include meta-commentary; just output the document.`;
+Generate the full document based on the sources above. Use markdown (headers, lists, code blocks where appropriate). Every claim or recommendation must trace back to the provided sources. Do not include meta-commentary; output only the document.`;
 
     const content = await generateWithFallback([{ role: "user", content: prompt }]);
 
