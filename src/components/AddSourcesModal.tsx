@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from "react";
-import { Star, FileText, Smartphone, Upload } from "lucide-react";
+import { Star, FileText, Smartphone, Upload, Mic } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -23,18 +23,25 @@ export interface AddSourcesModalProps {
   onOpenChange: (open: boolean) => void;
   onAddReviews?: (store: StoreType, appPageUrl: string) => void | Promise<void>;
   onAddDocuments?: (files: File[]) => void | Promise<void>;
+  onAddAudio?: (files: File[]) => void | Promise<void>;
 }
 
 const ACCEPT_DOCUMENTS = ".pdf,.txt,.doc,.docx,.xls,.xlsx";
+const ACCEPT_AUDIO = "audio/*,.mp3,.wav,.m4a,.webm,.ogg,.flac,.mpga";
 
 const isValidDocument = (file: File) =>
   /\.(pdf|txt|doc|docx|xls|xlsx)$/i.test(file.name);
+
+const isValidAudio = (file: File) =>
+  /\.(mp3|wav|m4a|webm|ogg|flac|mpga)$/i.test(file.name) ||
+  file.type.startsWith("audio/");
 
 const AddSourcesModal = ({
   open,
   onOpenChange,
   onAddReviews,
   onAddDocuments,
+  onAddAudio,
 }: AddSourcesModalProps) => {
   const [reviewsStore, setReviewsStore] = useState<StoreType>("play");
   const [reviewsUrl, setReviewsUrl] = useState("");
@@ -47,11 +54,24 @@ const AddSourcesModal = ({
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [audioFiles, setAudioFiles] = useState<File[]>([]);
+  const [audioError, setAudioError] = useState<string | null>(null);
+  const [audioSubmitting, setAudioSubmitting] = useState(false);
+  const [isAudioDragging, setIsAudioDragging] = useState(false);
+  const audioInputRef = useRef<HTMLInputElement>(null);
+
   const addValidFiles = (files: FileList | File[]) => {
     const list = Array.isArray(files) ? files : Array.from(files);
     const valid = list.filter(isValidDocument);
     setDocumentFiles((prev) => [...prev, ...valid]);
     setDocumentsError(null);
+  };
+
+  const addValidAudioFiles = (files: FileList | File[]) => {
+    const list = Array.isArray(files) ? files : Array.from(files);
+    const valid = list.filter(isValidAudio);
+    setAudioFiles((prev) => [...prev, ...valid]);
+    setAudioError(null);
   };
 
   const handleAddReviews = async () => {
@@ -109,6 +129,53 @@ const AddSourcesModal = ({
     setDocumentFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleAudioSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) addValidAudioFiles(files);
+    if (audioInputRef.current) audioInputRef.current.value = "";
+  };
+
+  const handleAudioDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsAudioDragging(true);
+  };
+
+  const handleAudioDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsAudioDragging(false);
+  };
+
+  const handleAudioDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsAudioDragging(false);
+    addValidAudioFiles(e.dataTransfer.files);
+  };
+
+  const removeAudio = (index: number) => {
+    setAudioFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAddAudio = async () => {
+    setAudioError(null);
+    if (audioFiles.length === 0) {
+      setAudioError("Please select at least one audio file.");
+      return;
+    }
+    setAudioSubmitting(true);
+    try {
+      await onAddAudio?.(audioFiles);
+      setAudioFiles([]);
+      onOpenChange(false);
+    } catch (e) {
+      setAudioError(e instanceof Error ? e.message : "Failed to transcribe audio");
+    } finally {
+      setAudioSubmitting(false);
+    }
+  };
+
   const handleAddDocuments = async () => {
     setDocumentsError(null);
     if (documentFiles.length === 0) {
@@ -133,7 +200,10 @@ const AddSourcesModal = ({
       setReviewsError(null);
       setDocumentFiles([]);
       setDocumentsError(null);
+      setAudioFiles([]);
+      setAudioError(null);
       setIsDragging(false);
+      setIsAudioDragging(false);
     }
     onOpenChange(open);
   };
@@ -144,12 +214,12 @@ const AddSourcesModal = ({
         <DialogHeader>
           <DialogTitle>Add sources</DialogTitle>
           <DialogDescription>
-            Choose a source type and add app reviews or documents to your project.
+            Choose a source type and add app reviews, documents, or audio to your project.
           </DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="reviews" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="reviews" className="flex items-center gap-2">
               <Star className="w-4 h-4" />
               Reviews
@@ -157,6 +227,10 @@ const AddSourcesModal = ({
             <TabsTrigger value="documents" className="flex items-center gap-2">
               <FileText className="w-4 h-4" />
               Documents
+            </TabsTrigger>
+            <TabsTrigger value="audio" className="flex items-center gap-2">
+              <Mic className="w-4 h-4" />
+              Audio
             </TabsTrigger>
           </TabsList>
 
@@ -281,6 +355,78 @@ const AddSourcesModal = ({
               className="w-full tofu-gradient text-primary-foreground hover:opacity-90"
             >
               {documentsSubmitting ? "Uploading…" : "Add documents"}
+            </Button>
+          </TabsContent>
+
+          <TabsContent value="audio" className="space-y-4 mt-4">
+            <p className="text-sm text-muted-foreground">
+              Upload audio (e.g. interviews, calls). Speech is transcribed with AI and used like document content. Max 25 MB per file. Requires OPENAI_API_KEY.
+            </p>
+            <div className="space-y-2">
+              <Label>Audio files</Label>
+              <input
+                ref={audioInputRef}
+                type="file"
+                accept={ACCEPT_AUDIO}
+                multiple
+                onChange={handleAudioSelect}
+                className="hidden"
+              />
+              <div
+                onDragOver={handleAudioDragOver}
+                onDragLeave={handleAudioDragLeave}
+                onDrop={handleAudioDrop}
+                className={cn(
+                  "rounded-lg border-2 border-dashed transition-colors flex flex-col items-center justify-center gap-2 py-6 px-4 min-h-[120px]",
+                  isAudioDragging
+                    ? "border-primary bg-primary/5"
+                    : "border-border bg-muted/30 hover:bg-muted/50"
+                )}
+              >
+                <Mic className="w-8 h-8 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground text-center">
+                  {isAudioDragging ? "Drop audio here" : "Drag and drop audio, or"}
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="border-dashed"
+                  onClick={() => audioInputRef.current?.click()}
+                >
+                  Choose MP3, WAV, M4A, etc.
+                </Button>
+              </div>
+              {audioFiles.length > 0 && (
+                <ul className="text-sm space-y-1 mt-2">
+                  {audioFiles.map((file, i) => (
+                    <li
+                      key={`${file.name}-${i}`}
+                      className="flex items-center justify-between gap-2 py-1 px-2 rounded bg-muted"
+                    >
+                      <span className="truncate text-foreground">{file.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeAudio(i)}
+                        className="text-muted-foreground hover:text-destructive shrink-0"
+                        aria-label={`Remove ${file.name}`}
+                      >
+                        ×
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {audioError && (
+                <p className="text-sm text-destructive">{audioError}</p>
+              )}
+            </div>
+            <Button
+              onClick={handleAddAudio}
+              disabled={audioFiles.length === 0 || audioSubmitting}
+              className="w-full tofu-gradient text-primary-foreground hover:opacity-90"
+            >
+              {audioSubmitting ? "Transcribing…" : "Add audio"}
             </Button>
           </TabsContent>
         </Tabs>

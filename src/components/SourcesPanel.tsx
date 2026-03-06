@@ -12,6 +12,7 @@ import {
   updateSources,
   addReviewsSource,
   addDocumentSources,
+  addAudioSources,
   type Source,
 } from "@/lib/api";
 
@@ -96,6 +97,16 @@ const SourcesPanel = ({ mobile }: { mobile?: boolean }) => {
     }
   };
 
+  const handleAddAudio = async (files: File[]) => {
+    if (!currentProjectId) return;
+    try {
+      await addAudioSources(currentProjectId, files);
+      await loadSources();
+    } catch (e) {
+      throw e;
+    }
+  };
+
   return (
     <aside className={`${mobile ? "w-full h-full" : "w-72 min-w-[280px] border-r"} border-border flex flex-col panel-bg pb-safe`}>
       <div className="p-4 border-b border-border flex items-center justify-between">
@@ -124,6 +135,7 @@ const SourcesPanel = ({ mobile }: { mobile?: boolean }) => {
           onOpenChange={setAddModalOpen}
           onAddReviews={handleAddReviews}
           onAddDocuments={handleAddDocuments}
+          onAddAudio={handleAddAudio}
         />
       </div>
 

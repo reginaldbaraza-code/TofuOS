@@ -184,6 +184,37 @@ export async function addDocumentSources(
   })) : [];
 }
 
+export async function addAudioSources(
+  projectId: string,
+  files: File[]
+): Promise<Source[]> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) throw new Error("Not authenticated");
+
+  const formData = new FormData();
+  formData.set("projectId", projectId);
+  files.forEach((file) => formData.append("files", file));
+
+  const response = await fetch("/api/sources/upload-audio", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${session.access_token}` },
+    body: formData,
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to transcribe audio");
+  }
+  const data = await response.json();
+  return Array.isArray(data) ? data.map((row: { id: string; name: string; type: string; content?: string | null }) => ({
+    id: row.id,
+    name: row.name,
+    type: row.type as Source["type"],
+    selected: true,
+    project_id: projectId,
+    content: row.content ?? null,
+  })) : [];
+}
+
 // --- Project insights (stored per project) ---
 export async function getProjectInsights(projectId: string | null): Promise<InsightItem[]> {
   if (!projectId) return [];
