@@ -478,3 +478,68 @@ export async function deleteExportedJiraTicket(id: string): Promise<void> {
 
   if (error) throw error;
 }
+
+// --- Studio documents (generated per project, listed below Studio buttons) ---
+export interface StudioDocumentItem {
+  id: string;
+  project_id: string;
+  document_type: string;
+  label: string;
+  content: string;
+  source_count: number;
+  created_at?: string;
+}
+
+export async function getStudioDocuments(projectId: string | null): Promise<StudioDocumentItem[]> {
+  if (!projectId) return [];
+
+  const { data, error } = await supabase
+    .from('studio_documents')
+    .select('id, project_id, document_type, label, content, source_count, created_at')
+    .eq('project_id', projectId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching studio documents:', error);
+    return [];
+  }
+  return (data ?? []) as StudioDocumentItem[];
+}
+
+export async function saveStudioDocument(
+  projectId: string,
+  payload: { document_type: string; label: string; content: string; source_count: number }
+): Promise<StudioDocumentItem> {
+  const { data, error } = await supabase
+    .from('studio_documents')
+    .insert({
+      project_id: projectId,
+      document_type: payload.document_type,
+      label: payload.label,
+      content: payload.content,
+      source_count: payload.source_count,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as StudioDocumentItem;
+}
+
+export async function updateStudioDocument(id: string, content: string): Promise<void> {
+  const { error } = await supabase
+    .from('studio_documents')
+    .update({ content })
+    .eq('id', id);
+
+  if (error) throw error;
+}
+
+export async function deleteStudioDocument(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('studio_documents')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
+}
