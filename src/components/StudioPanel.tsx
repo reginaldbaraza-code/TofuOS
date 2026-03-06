@@ -132,8 +132,6 @@ const StudioPanel = ({ mobile }: { mobile?: boolean }) => {
             content,
             source_count: selectedSourceIds.length,
           });
-          setOutputContent(content);
-          setOutputLabel(label);
           setDocuments((prev) => [saved, ...prev]);
           setDocumentModalDoc(saved);
           setModalContent(saved.content);
@@ -378,12 +376,12 @@ const StudioPanel = ({ mobile }: { mobile?: boolean }) => {
 
       {/* Document view/edit popup */}
       <Dialog open={!!documentModalDoc} onOpenChange={(open) => !open && handleCloseDocumentModal()}>
-        <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col p-0 gap-0">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
-            <DialogHeader>
-              <DialogTitle className="text-base">{documentModalDoc?.label}</DialogTitle>
+        <DialogContent className="z-[60] max-w-3xl max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden w-[95vw] sm:w-full">
+          <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border flex-shrink-0 pr-12">
+            <DialogHeader className="min-w-0 flex-1">
+              <DialogTitle className="text-base truncate">{documentModalDoc?.label}</DialogTitle>
             </DialogHeader>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 flex-shrink-0">
               <button
                 type="button"
                 onClick={handleSaveModalDocument}
@@ -422,12 +420,14 @@ const StudioPanel = ({ mobile }: { mobile?: boolean }) => {
               </button>
             </div>
           </div>
-          <textarea
-            value={modalContent}
-            onChange={(e) => setModalContent(e.target.value)}
-            className="flex-1 min-h-[300px] w-full p-4 text-sm font-mono whitespace-pre-wrap resize-none focus:outline-none focus:ring-0 border-0 bg-transparent"
-            spellCheck={false}
-          />
+          <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+            <textarea
+              value={modalContent}
+              onChange={(e) => setModalContent(e.target.value)}
+              className="flex-1 min-h-0 w-full p-4 text-sm font-mono whitespace-pre-wrap resize-none focus:outline-none focus:ring-0 border-0 bg-transparent overflow-auto"
+              spellCheck={false}
+            />
+          </div>
         </DialogContent>
       </Dialog>
 
