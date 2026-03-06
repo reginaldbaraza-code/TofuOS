@@ -52,18 +52,10 @@ export async function POST(req: Request) {
 
       try {
         if (lower.endsWith('.pdf')) {
-          const { PDFParse } = await import('pdf-parse');
+          const { getDocumentProxy, extractText } = await import('unpdf');
           const arrayBuffer = await file.arrayBuffer();
-          const data = new Uint8Array(arrayBuffer);
-          const parser = new PDFParse({ data });
-          const result = await parser.getText();
-          await parser.destroy();
-          const rawText =
-            typeof result === 'string'
-              ? result
-              : result?.text ?? (Array.isArray((result as { pages?: { text?: string }[] })?.pages)
-                  ? (result as { pages: { text?: string }[] }).pages.map((p) => p?.text ?? '').join('\n\n')
-                  : '');
+          const pdf = await getDocumentProxy(new Uint8Array(arrayBuffer));
+          const { text: rawText } = await extractText(pdf, { mergePages: true });
           content = rawText && String(rawText).trim() ? truncate(String(rawText).trim(), MAX_PER_SOURCE) : null;
           if (!content) console.warn('[upload-documents] PDF produced no text:', name);
         } else if (lower.endsWith('.txt') || file.type === 'text/plain') {
