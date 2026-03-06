@@ -52,8 +52,14 @@ export async function POST(req: Request) {
       context = `Project context (use this to align answers): ${projectContext.trim()}\n\n`;
     }
 
-    if (supabaseUrl && supabaseAnonKey && sourceIds && sourceIds.length > 0) {
-      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    const authHeader = req.headers.get('Authorization');
+    const token = authHeader?.replace(/^Bearer\s+/i, '').trim();
+
+    if (sourceIds && sourceIds.length > 0 && supabaseUrl && supabaseAnonKey) {
+      const supabase = createClient(supabaseUrl, supabaseAnonKey, token
+        ? { global: { headers: { Authorization: `Bearer ${token}` } } }
+        : undefined
+      );
       const { data: sources } = await supabase
         .from('sources')
         .select('name, type, content')
@@ -61,6 +67,9 @@ export async function POST(req: Request) {
       
       if (sources && sources.length > 0) {
         const sourceContent = buildSourceContextWithContent(sources);
+        context = (projectContext && typeof projectContext === 'string' && projectContext.trim())
+          ? `Project context (use this to align answers): ${projectContext.trim()}\n\n`
+          : '';
         context += `The user has selected the following sources. Use the actual content below to answer accurately. If content is missing for a source, say so and use general PM knowledge only for that part.\n\n${sourceContent}`;
       }
     }

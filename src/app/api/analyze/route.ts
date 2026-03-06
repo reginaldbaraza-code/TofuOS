@@ -51,7 +51,12 @@ export async function POST(req: Request) {
     let sourceContext = `Source IDs: ${sourceIds.join(', ')}.`;
 
     if (supabaseUrl && supabaseAnonKey) {
-      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+      const authHeader = req.headers.get('Authorization');
+      const token = authHeader?.replace(/^Bearer\s+/i, '').trim();
+      const supabase = createClient(supabaseUrl, supabaseAnonKey, token
+        ? { global: { headers: { Authorization: `Bearer ${token}` } } }
+        : undefined
+      );
       const { data: sources } = await supabase
         .from('sources')
         .select('id, name, type, meta, content')

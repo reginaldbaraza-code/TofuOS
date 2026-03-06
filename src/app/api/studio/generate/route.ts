@@ -67,7 +67,12 @@ export async function POST(req: Request) {
     let sourceContext = "No sources selected.";
 
     if (supabaseUrl && supabaseAnonKey && sourceIds && Array.isArray(sourceIds) && sourceIds.length > 0) {
-      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+      const authHeader = req.headers.get('Authorization');
+      const token = authHeader?.replace(/^Bearer\s+/i, '').trim();
+      const supabase = createClient(supabaseUrl, supabaseAnonKey, token
+        ? { global: { headers: { Authorization: `Bearer ${token}` } } }
+        : undefined
+      );
       const { data: sources } = await supabase
         .from('sources')
         .select('id, name, type, meta, content')

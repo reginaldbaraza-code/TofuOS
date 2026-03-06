@@ -256,9 +256,13 @@ export async function appendChatMessage(
 
 // --- Analyze (AI PM insights) ---
 export async function analyzeSources(sourceIds: string[]): Promise<{ insights: InsightItem[]; suggestedPrompts?: string[] }> {
+  const { data: { session } } = await supabase.auth.getSession();
   const response = await fetch('/api/analyze', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+    },
     body: JSON.stringify({ sourceIds }),
   });
 
@@ -277,9 +281,13 @@ export async function chatWithAI(
   history: { role: "user" | "assistant"; content: string }[],
   projectContext?: string | null
 ): Promise<{ content: string }> {
+  const { data: { session } } = await supabase.auth.getSession();
   const response = await fetch('/api/chat', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+    },
     body: JSON.stringify({ message, sourceIds, history, projectContext: projectContext ?? undefined }),
   });
 
@@ -317,9 +325,13 @@ export async function generateStudioDocument(
   documentType: string,
   sourceIds: string[]
 ): Promise<{ content: string }> {
+  const { data: { session } } = await supabase.auth.getSession();
   const response = await fetch('/api/studio/generate', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+    },
     body: JSON.stringify({ documentType, sourceIds }),
   });
 
