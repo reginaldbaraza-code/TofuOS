@@ -190,8 +190,8 @@ export default function InsightsModal({ open, onOpenChange, projectId }: Insight
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+        <DialogContent className="max-w-2xl h-[90vh] max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
             <DialogHeader>
               <DialogTitle className="text-base">Insights from sources</DialogTitle>
             </DialogHeader>
@@ -204,8 +204,8 @@ export default function InsightsModal({ open, onOpenChange, projectId }: Insight
               <X className="w-4 h-4" />
             </button>
           </div>
-          <div className="flex flex-col flex-1 min-h-0 overflow-hidden px-4 pb-4">
-            <div className="flex flex-wrap items-center justify-between gap-2 py-3">
+          <div className="flex flex-col flex-1 min-h-0 overflow-hidden px-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 py-3 flex-shrink-0">
               <button
                 type="button"
                 onClick={handleAnalyze}
@@ -228,12 +228,12 @@ export default function InsightsModal({ open, onOpenChange, projectId }: Insight
               </select>
             </div>
             {analyzeError && (
-              <p className="text-sm text-destructive mb-2">{analyzeError}</p>
+              <p className="text-sm text-destructive mb-2 flex-shrink-0">{analyzeError}</p>
             )}
-            <p className="text-xs text-muted-foreground mb-2">
+            <p className="text-xs text-muted-foreground mb-2 flex-shrink-0">
               Select sources in the left panel, then run Analyze. Manage status, export to Jira, or view details below.
             </p>
-            <ul className="space-y-2 overflow-y-auto flex-1 min-h-0 pr-1">
+            <ul className="space-y-2 overflow-y-auto flex-1 min-h-0 pr-1 pb-4">
               {filteredInsights.length === 0 ? (
                 <li className="text-sm text-muted-foreground py-4 text-center">
                   {insights.length === 0 ? "No insights yet. Run Analyze sources." : "No insights match the filter."}

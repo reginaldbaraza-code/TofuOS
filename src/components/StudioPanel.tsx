@@ -376,7 +376,7 @@ const StudioPanel = ({ mobile }: { mobile?: boolean }) => {
 
       {/* Document view/edit popup */}
       <Dialog open={!!documentModalDoc} onOpenChange={(open) => !open && handleCloseDocumentModal()}>
-        <DialogContent className="z-[60] max-w-3xl max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden w-[95vw] sm:w-full">
+        <DialogContent className="z-[60] max-w-3xl h-[85vh] max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden w-[95vw] sm:w-full">
           <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border flex-shrink-0 pr-12">
             <DialogHeader className="min-w-0 flex-1">
               <DialogTitle className="text-base truncate">{documentModalDoc?.label}</DialogTitle>
@@ -420,11 +420,11 @@ const StudioPanel = ({ mobile }: { mobile?: boolean }) => {
               </button>
             </div>
           </div>
-          <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+          <div className="flex-1 min-h-0 overflow-hidden flex flex-col min-h-[200px]">
             <textarea
               value={modalContent}
               onChange={(e) => setModalContent(e.target.value)}
-              className="flex-1 min-h-0 w-full p-4 text-sm font-mono whitespace-pre-wrap resize-none focus:outline-none focus:ring-0 border-0 bg-transparent overflow-auto"
+              className="flex-1 min-h-[200px] w-full p-4 text-sm font-mono whitespace-pre-wrap resize-none focus:outline-none focus:ring-0 border-0 bg-transparent overflow-auto"
               spellCheck={false}
             />
           </div>
