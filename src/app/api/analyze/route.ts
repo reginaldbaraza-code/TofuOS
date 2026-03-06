@@ -65,40 +65,43 @@ export async function POST(req: Request) {
       }
     }
 
-    const prompt = `You are a senior product manager and strategist. The user has selected the following sources (interviews, docs, reviews, etc.). Below is the actual content extracted from each source. Your job is to produce REAL INSIGHTS and ACTIONABLE ITEMS—not generic summaries.
+    const prompt = `You are a senior product manager. The user has selected sources (interviews, docs, reviews) below. Your job is to produce ACTIONABLE INSIGHTS: for each finding you must state the PROBLEM and a concrete ACTION to fix it. No generic summaries.
 
-What you must NOT do:
-- Do not just summarise what the sources say.
-- Do not state the obvious (e.g. "Users want better features").
-- Do not give one-size-fits-all advice that could apply to any product.
-
-What you MUST do:
-- Infer patterns, tensions, risks, and opportunities from the evidence.
-- Tie every insight to specific evidence (quotes, data points, or concrete examples from the sources).
-- End each insight with a clear, concrete ACTION the team can take (e.g. "Run a 1-week test with power users", "Add a discovery interview with segment X", "Prioritise fixing Y before Q2 launch", "Define success metric Z and baseline it").
-- Base insights on what is actually in the text; if something is ambiguous, say so and recommend a follow-up.
+Rules:
+- Each insight = one specific problem or gap identified in the sources + one concrete action to fix it.
+- Problem: what is wrong or missing, tied to specific evidence (quote or fact from a source).
+- Action: who does what, in what format or by when. Examples: "Product owner: run 3 user interviews with segment X by end of sprint"; "Engineering: add error logging for flow Y and set up alert"; "Design: create a discovery interview script for [topic] and share in Figma by Friday."
+- Do NOT give vague advice ("improve UX", "listen to users"). Be specific and executable.
+- Use the exact source names from the "Source: ..." headers when citing.
 
 ${sourceContext}
 
-Generate exactly 4 insights. For each insight provide:
-1. summary: One short, specific finding or opportunity (suitable as a ticket or initiative title). Must be concrete, not generic.
-2. description: 2–4 sentences that (a) state the insight clearly, (b) cite specific evidence from the sources (quote or refer to a named source), and (c) end with a concrete, actionable next step (who does what, by when or in what format).
-3. sourceNames: Array of the exact source names from the "Source: ..." headers above that this insight is based on.
-4. evidence: 1–2 sentences with a direct quote or specific fact from the source(s) that support this insight.
+Generate exactly 4 insights. For each insight return a JSON object with:
+1. summary: Short title for the problem (suitable as a ticket title). E.g. "No direct access to end customers (PO hypothesis risk)".
+2. description: 2–3 sentences stating the problem and why it matters, with a specific reference to the source(s).
+3. action: One concrete, executable action to fix the problem. Format: "Who: what to do, by when or in what format." Must be something a team can do without further clarification.
+4. sourceNames: Array of exact source names from the headers above that this insight is based on.
+5. evidence: A direct quote or specific fact from the source(s) that supports this finding.
 
-Return a valid JSON object with a single key "insights" containing an array of 4 objects, each with keys "summary", "description", "sourceNames", and "evidence".
-Example: {"insights": [{"summary": "Discovery gap: no direct access to end customers", "description": "Stefan (PO) reports having to make hypotheses from Germany about users in US/Indonesia with no way to validate. He relies on secondhand input from market managers. Evidence: 'Finding those customers in a big corporation is super complicated.' Action: Schedule 2–3 discovery interviews per market with real end users within the next sprint; assign an owner.", "sourceNames": ["Stefan.pdf"], "evidence": "Direct quote from Stefan on customer access."}, ...]}`;
+Return a valid JSON object with a single key "insights" containing an array of 4 objects with keys "summary", "description", "action", "sourceNames", "evidence".
+
+Example:
+{"insights": [
+  {"summary": "Discovery gap: no direct access to end customers", "description": "The PO reports making hypotheses from Germany about users in US/Indonesia with no way to validate; relies on secondhand input from market managers.", "action": "Product owner: Schedule 2–3 discovery interviews per market with real end users within the next sprint; assign an owner and add to backlog.", "sourceNames": ["Stefan.pdf"], "evidence": "'Finding those customers in a big corporation is super complicated.'"},
+  ...
+]}`;
 
     const text = await generateWithFallback([{ role: "user", content: prompt }]);
     const cleanedText = text.replace(/```json|```/g, "").trim();
     const parsed = JSON.parse(cleanedText);
     const rawInsights = Array.isArray(parsed.insights) ? parsed.insights : [];
     const data = {
-      insights: rawInsights.map((item: { summary?: string; description?: string; sourceNames?: string[]; evidence?: string }) => ({
+      insights: rawInsights.map((item: { summary?: string; description?: string; sourceNames?: string[]; evidence?: string; action?: string }) => ({
         summary: item.summary ?? "",
         description: item.description ?? "",
         sourceNames: Array.isArray(item.sourceNames) ? item.sourceNames : [],
         evidence: typeof item.evidence === "string" ? item.evidence : "",
+        action: typeof item.action === "string" ? item.action : "",
       })),
     };
 

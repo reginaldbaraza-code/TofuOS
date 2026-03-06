@@ -110,6 +110,8 @@ export interface InsightItem {
   sourceNames?: string[];
   /** Key evidence or reasoning from the sources (from analysis). */
   evidence?: string;
+  /** Concrete action to fix the problem (from analysis). */
+  action?: string;
 }
 
 export async function updateSources(sources: Source[]): Promise<Source[]> {
@@ -194,12 +196,13 @@ export async function getProjectInsights(projectId: string | null): Promise<Insi
 
   if (error || !data?.insights) return [];
   const raw = Array.isArray(data.insights) ? data.insights : [];
-  return raw.map((item: { summary?: string; description?: string; status?: InsightStatus; sourceNames?: string[]; source_names?: string[]; evidence?: string }) => ({
+  return raw.map((item: { summary?: string; description?: string; status?: InsightStatus; sourceNames?: string[]; source_names?: string[]; evidence?: string; action?: string }) => ({
     summary: item.summary ?? "",
     description: item.description ?? "",
     status: (item.status as InsightStatus) ?? "not_started",
     sourceNames: item.sourceNames ?? item.source_names ?? undefined,
     evidence: item.evidence ?? undefined,
+    action: item.action ?? undefined,
   }));
 }
 
@@ -210,6 +213,7 @@ export async function saveProjectInsights(projectId: string, insights: InsightIt
     status: i.status ?? "not_started",
     ...(i.sourceNames != null && { sourceNames: i.sourceNames }),
     ...(i.evidence != null && i.evidence !== "" && { evidence: i.evidence }),
+    ...(i.action != null && i.action !== "" && { action: i.action }),
   }));
   const { error } = await supabase
     .from('project_insights')
@@ -316,7 +320,10 @@ export async function searchProject(
   return {
     sources: sources.filter((s) => s.name.toLowerCase().includes(q)),
     messages: messages.filter((m) => m.content.toLowerCase().includes(q)),
-    insights: insights.filter((i) => i.summary.toLowerCase().includes(q) || i.description.toLowerCase().includes(q)),
+    insights: insights.filter((i) => {
+      const qq = q.toLowerCase();
+      return i.summary.toLowerCase().includes(qq) || i.description.toLowerCase().includes(qq) || (i.action?.toLowerCase().includes(qq) ?? false);
+    }),
   };
 }
 

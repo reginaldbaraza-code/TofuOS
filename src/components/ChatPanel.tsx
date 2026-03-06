@@ -203,7 +203,7 @@ const ChatPanel = () => {
   };
 
   const handleCopyFullInsight = (insight: InsightItem) => {
-    const text = `${insight.summary}\n\n${insight.description}`;
+    const text = `${insight.summary}\n\n${insight.description}${insight.action ? `\n\nAction: ${insight.action}` : ""}`;
     navigator.clipboard.writeText(text);
     toast.success("Copied summary and description to clipboard");
   };
@@ -492,7 +492,10 @@ const ChatPanel = () => {
                     onKeyDown={(e) => e.key === "Enter" && setInsightDetail(insight)}
                     className="min-w-0 cursor-pointer hover:underline focus:outline-none focus:underline"
                   >
-                    {insight.summary}
+                    <span className="block truncate">{insight.summary}</span>
+                    {insight.action && (
+                      <span className="block truncate text-xs text-muted-foreground font-normal mt-0.5">→ {insight.action}</span>
+                    )}
                   </span>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
@@ -526,7 +529,7 @@ const ChatPanel = () => {
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleCopyFullInsight(insight)} className="flex items-center gap-2 cursor-pointer">
                         <Copy className="w-4 h-4" />
-                        Copy full (summary + description)
+                        Copy full (summary + description + action)
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => handleDeleteInsight(globalIndex)}
@@ -568,6 +571,12 @@ const ChatPanel = () => {
                   <p className="font-medium text-muted-foreground mb-1">Description</p>
                   <p className="text-foreground whitespace-pre-wrap">{insightDetail.description || "—"}</p>
                 </div>
+                {insightDetail.action && (
+                  <div>
+                    <p className="font-medium text-muted-foreground mb-1">Action to take</p>
+                    <p className="text-foreground whitespace-pre-wrap rounded-md bg-primary/10 dark:bg-primary/20 border border-primary/20 dark:border-primary/30 px-3 py-2">{insightDetail.action}</p>
+                  </div>
+                )}
                 <div>
                   <p className="font-medium text-muted-foreground mb-1">Sources</p>
                   <p className="text-foreground">
