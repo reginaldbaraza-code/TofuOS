@@ -15,16 +15,17 @@ import {
   Rocket,
   Map,
   Pencil,
-  Sparkles,
-  Copy,
-  Download,
   LayoutGrid,
   List,
   Lightbulb,
+  Copy,
+  Download,
+  RefreshCw,
 } from "lucide-react";
 import { fetchSources, generateStudioDocument } from "@/lib/api";
 import { useProject } from "@/contexts/ProjectContext";
 import InsightsModal from "@/components/InsightsModal";
+import { toast } from "sonner";
 
 interface StudioItem {
   id: string;
@@ -53,10 +54,13 @@ const StudioPanel = ({ mobile }: { mobile?: boolean }) => {
   const [activeItem, setActiveItem] = useState<string | null>(null);
   const [gridLayout, setGridLayout] = useState(true);
   const [sources, setSources] = useState<{ id: string; selected: boolean }[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [output, setOutput] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [insightsModalOpen, setInsightsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [loadingLabel, setLoadingLabel] = useState("");
+  const [outputContent, setOutputContent] = useState("");
+  const [outputLabel, setOutputLabel] = useState("");
+  const [outputType, setOutputType] = useState<string | null>(null);
 
   const loadSources = useCallback(async () => {
     if (!currentProjectId) {
@@ -77,42 +81,54 @@ const StudioPanel = ({ mobile }: { mobile?: boolean }) => {
 
   const selectedSourceIds = sources.filter((s) => s.selected).map((s) => s.id);
 
-  const handleCreateDocument = async () => {
-    if (!activeItem) {
-      setError("Select a document type above first.");
-      return;
-    }
-    if (activeItem === "insights") {
+  const runDocumentGeneration = useCallback(
+    async (documentType: string) => {
+      if (selectedSourceIds.length === 0) {
+        setError("Select at least one source in the left panel. Documents are generated from your added sources.");
+        return;
+      }
+      setError(null);
+      setLoading(true);
+      setLoadingLabel(studioItems.find((i) => i.id === documentType)?.label ?? documentType);
+      setOutputType(documentType);
+      try {
+        const { content } = await generateStudioDocument(documentType, selectedSourceIds);
+        setOutputContent(content);
+        setOutputLabel(studioItems.find((i) => i.id === documentType)?.label ?? documentType);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Generation failed");
+        setOutputContent("");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [selectedSourceIds]
+  );
+
+  const handleDocumentCardClick = (item: StudioItem) => {
+    if (item.id === "insights") {
       setInsightsModalOpen(true);
+      setActiveItem(null);
       return;
     }
-    if (selectedSourceIds.length === 0) {
-      setError("Select at least one source in the left panel. Documents are generated from your added sources.");
-      return;
-    }
-    setError(null);
-    setOutput(null);
-    setLoading(true);
-    try {
-      const { content } = await generateStudioDocument(activeItem, selectedSourceIds);
-      setOutput(content);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Generation failed");
-    } finally {
-      setLoading(false);
+    setActiveItem(activeItem === item.id ? null : item.id);
+    runDocumentGeneration(item.id);
+  };
+
+  const handleRegenerateDocument = useCallback(() => {
+    if (outputType) runDocumentGeneration(outputType);
+  }, [outputType, runDocumentGeneration]);
+
+  const handleCopyOutput = () => {
+    if (outputContent) {
+      navigator.clipboard.writeText(outputContent);
+      toast.success("Copied to clipboard");
     }
   };
 
-  const handleCopy = () => {
-    if (output) {
-      navigator.clipboard.writeText(output);
-    }
-  };
-
-  const handleDownload = () => {
-    if (!output) return;
-    const label = studioItems.find((i) => i.id === activeItem)?.label ?? "document";
-    const filename = `${label.replace(/\s+/g, "-")}.pdf`;
+  const handleDownloadOutput = () => {
+    if (!outputContent) return;
+    const filename = `${outputLabel.replace(/\s+/g, "-")}.pdf`;
     const doc = new jsPDF({ format: "a4", unit: "mm" });
     const margin = 20;
     const pageWidth = doc.getPageWidth();
@@ -121,7 +137,7 @@ const StudioPanel = ({ mobile }: { mobile?: boolean }) => {
     const lineHeight = 6;
     const fontSize = 10;
     doc.setFontSize(fontSize);
-    const lines = doc.splitTextToSize(output, maxWidth);
+    const lines = doc.splitTextToSize(outputContent, maxWidth);
     for (const line of lines) {
       if (y > doc.getPageHeight() - margin) {
         doc.addPage();
@@ -131,6 +147,7 @@ const StudioPanel = ({ mobile }: { mobile?: boolean }) => {
       y += lineHeight;
     }
     doc.save(filename);
+    toast.success("Downloaded as PDF");
   };
 
   return (
@@ -151,20 +168,13 @@ const StudioPanel = ({ mobile }: { mobile?: boolean }) => {
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3">
+      <div className="flex-shrink-0 overflow-y-auto p-3">
         <div className={gridLayout ? "grid grid-cols-2 gap-2" : "flex flex-col gap-2"}>
           {studioItems.map((item) => (
             <button
               key={item.id}
               type="button"
-              onClick={() => {
-                if (item.id === "insights") {
-                  setInsightsModalOpen(true);
-                  setActiveItem(null);
-                } else {
-                  setActiveItem(activeItem === item.id ? null : item.id);
-                }
-              }}
+              onClick={() => handleDocumentCardClick(item)}
               className={`flex items-center gap-2.5 p-3 rounded-xl text-left transition-all group ${
                 activeItem === item.id
                   ? "bg-primary/10 border border-primary/30"
@@ -181,58 +191,63 @@ const StudioPanel = ({ mobile }: { mobile?: boolean }) => {
         </div>
       </div>
 
-      {/* Studio Output Area */}
-      <div className="p-4 border-t border-border bg-background pb-safe flex flex-col min-h-0">
-        {output ? (
+      {/* Output area below buttons: loader or document */}
+      <div className="flex-1 min-h-0 flex flex-col border-t border-border bg-background overflow-hidden">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-10 px-4 text-muted-foreground">
+            <RefreshCw className="w-8 h-8 animate-spin mb-3" />
+            <p className="text-sm">Generating {loadingLabel} document…</p>
+          </div>
+        ) : outputContent ? (
           <>
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <span className="text-xs font-medium text-foreground">Output</span>
-              <div className="flex items-center gap-1">
+            <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-border flex-shrink-0">
+              <span className="text-xs font-medium text-foreground truncate">{outputLabel}</span>
+              <div className="flex items-center gap-1 shrink-0">
                 <button
                   type="button"
-                  onClick={handleCopy}
+                  onClick={handleCopyOutput}
                   className="p-1.5 rounded hover:bg-muted transition-colors"
-                  title="Copy to clipboard"
+                  title="Copy"
                 >
                   <Copy className="w-3.5 h-3.5 text-muted-foreground" />
                 </button>
                 <button
                   type="button"
-                  onClick={handleDownload}
-                  className="p-1.5 rounded hover:bg-muted transition-colors flex items-center gap-1.5"
-                  title="Download as PDF"
+                  onClick={handleDownloadOutput}
+                  className="p-1.5 rounded hover:bg-muted transition-colors flex items-center gap-1"
+                  title="Download PDF"
                 >
-                  <Download className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                  <span className="text-xs text-muted-foreground">Download</span>
+                  <Download className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground hidden sm:inline">Download</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRegenerateDocument}
+                  className="p-1.5 rounded hover:bg-muted transition-colors flex items-center gap-1"
+                  title="Regenerate"
+                >
+                  <RefreshCw className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground hidden sm:inline">Regenerate</span>
                 </button>
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto rounded-lg border border-border bg-muted/30 p-3 text-sm text-foreground whitespace-pre-wrap font-mono max-h-64 min-h-[120px]">
-              {output}
-            </div>
+            <textarea
+              value={outputContent}
+              onChange={(e) => setOutputContent(e.target.value)}
+              className="flex-1 min-h-[200px] w-full p-3 text-sm text-foreground font-mono whitespace-pre-wrap resize-none focus:outline-none focus:ring-0 border-0 bg-transparent"
+              spellCheck={false}
+            />
           </>
         ) : (
-          <div className="flex flex-col items-center text-center py-6">
-            <Sparkles className="w-6 h-6 text-primary mb-2" />
-            <p className="text-sm font-medium text-primary">
-              Studio output will be saved here.
-            </p>
-            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-              Select a document type above, select sources in the left panel, then click Create Document. Output is generated from your added sources.
+          <div className="flex flex-col items-center justify-center text-center py-8 px-4 text-muted-foreground">
+            <FileText className="w-8 h-8 mb-2 opacity-50" />
+            <p className="text-xs leading-relaxed">
+              Select sources in the left panel, then click a document type above to generate. The document will appear here and you can edit, copy, or download it.
             </p>
           </div>
         )}
-        {error && <p className="text-xs text-destructive mt-2">{error}</p>}
-        <button
-          type="button"
-          onClick={handleCreateDocument}
-          disabled={loading}
-          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 tofu-gradient text-primary-foreground rounded-xl text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-70 mt-3"
-        >
-          <FileText className="w-4 h-4" />
-          {loading ? "Generating…" : "Create Document"}
-        </button>
       </div>
+      {error && <p className="text-xs text-destructive px-4 py-2 flex-shrink-0">{error}</p>}
       <InsightsModal
         open={insightsModalOpen}
         onOpenChange={setInsightsModalOpen}
