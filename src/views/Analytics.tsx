@@ -140,6 +140,7 @@ const Analytics = () => {
             Print / Save as PDF
           </Button>
         </div>
+        <div className="h-0.5 tofu-gradient opacity-30 print:hidden" />
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-8">
@@ -183,7 +184,9 @@ const Analytics = () => {
           <Card className="border-border">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <FolderOpen className="w-4 h-4" />
+                <div className="w-6 h-6 rounded-md bg-blue-500/10 flex items-center justify-center">
+                  <FolderOpen className="w-3.5 h-3.5 text-blue-600" />
+                </div>
                 Projects
               </CardTitle>
             </CardHeader>
@@ -196,7 +199,9 @@ const Analytics = () => {
           <Card className="border-border">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <FileText className="w-4 h-4" />
+                <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center">
+                  <FileText className="w-3.5 h-3.5 text-primary" />
+                </div>
                 Sources
               </CardTitle>
             </CardHeader>
@@ -209,7 +214,9 @@ const Analytics = () => {
           <Card className="border-border">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <MessageSquare className="w-4 h-4" />
+                <div className="w-6 h-6 rounded-md bg-emerald-500/10 flex items-center justify-center">
+                  <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
+                </div>
                 Chat messages
               </CardTitle>
             </CardHeader>
@@ -222,7 +229,9 @@ const Analytics = () => {
           <Card className="border-border">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Sparkles className="w-4 h-4" />
+                <div className="w-6 h-6 rounded-md bg-amber-500/10 flex items-center justify-center">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                </div>
                 Insights
               </CardTitle>
             </CardHeader>
@@ -290,7 +299,7 @@ const Analytics = () => {
                 </TableHeader>
                 <TableBody>
                   {stats.map(({ project, sourcesCount, messagesCount, insightsCount }) => (
-                    <TableRow key={project.id}>
+                    <TableRow key={project.id} className="hover:bg-muted/50 transition-colors">
                       <TableCell className="font-medium">{project.name}</TableCell>
                       <TableCell className="text-right tabular-nums">{sourcesCount}</TableCell>
                       <TableCell className="text-right tabular-nums">{messagesCount}</TableCell>

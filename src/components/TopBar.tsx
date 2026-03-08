@@ -105,13 +105,19 @@ const TopBar = () => {
 
   return (
     <header className="h-14 shrink-0 border-b border-border flex items-center justify-between px-3 md:px-5 panel-bg relative z-50 shadow-sm">
-      <div className="flex items-center gap-2 md:gap-4 min-w-0">
+      <div className="flex items-center gap-2 md:gap-3 min-w-0">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" aria-label="tofuOS home">
-          <div className="w-9 h-9 rounded-xl tofu-gradient flex items-center justify-center shadow-sm">
+        <Link
+          href="/"
+          className="flex items-center gap-2.5 flex-shrink-0 rounded-lg focus-ring group"
+          aria-label="tofuOS home"
+        >
+          <div className="w-9 h-9 rounded-xl tofu-gradient flex items-center justify-center shadow-sm transition-transform duration-200 group-hover:scale-105 group-active:scale-95">
             <Bot className="w-5 h-5 text-primary-foreground" aria-hidden />
           </div>
-          <span className="font-semibold text-foreground text-sm tracking-tight hidden sm:inline">tofuOS</span>
+          <span className="font-semibold text-foreground text-sm tracking-tight hidden sm:inline">
+            tofuOS
+          </span>
         </Link>
 
         <div className="w-px h-6 bg-border hidden sm:block" aria-hidden />
@@ -121,7 +127,7 @@ const TopBar = () => {
           <button
             type="button"
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="flex items-center gap-2 px-2.5 md:px-3 py-2 text-sm text-foreground hover:bg-muted rounded-lg transition-colors truncate min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="flex items-center gap-2 px-2.5 md:px-3 py-2 text-sm text-foreground hover:bg-muted rounded-lg transition-smooth truncate min-w-0 focus-ring"
             aria-expanded={dropdownOpen}
             aria-haspopup="listbox"
             aria-label="Switch project"
@@ -130,24 +136,30 @@ const TopBar = () => {
             <span className="font-medium truncate max-w-[140px] md:max-w-[200px]">
               {projectLoading ? "Loading…" : currentProject?.name ?? "No project"}
             </span>
-            <ChevronDown className={`w-4 h-4 text-muted-foreground flex-shrink-0 transition-transform ${dropdownOpen ? "rotate-180" : ""}`} aria-hidden />
+            <ChevronDown
+              className={`w-4 h-4 text-muted-foreground flex-shrink-0 transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""}`}
+              aria-hidden
+            />
           </button>
 
           {dropdownOpen && (
             <>
-              <div className="fixed inset-0" onClick={() => setDropdownOpen(false)} aria-hidden />
-              <div className="absolute top-full left-0 mt-1.5 w-72 panel-bg border border-border rounded-xl shadow-md py-1 max-h-80 overflow-y-auto z-50">
+              <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)} aria-hidden />
+              <div className="absolute top-full left-0 mt-1.5 w-72 panel-bg border border-border rounded-xl shadow-lg py-1 max-h-80 overflow-y-auto z-50 animate-scale-in">
+                <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Projects
+                </p>
                 {projects.map((proj) => (
                   <div
                     key={proj.id}
-                    className={`flex items-center gap-1 group px-2 py-1 ${
+                    className={`flex items-center gap-1 group px-2 py-0.5 ${
                       currentProject?.id === proj.id ? "bg-muted/50" : ""
                     }`}
                   >
                     <button
                       type="button"
                       onClick={() => handleSelectProject(proj.id)}
-                      className={`flex-1 min-w-0 text-left px-2 py-2 text-sm hover:bg-muted rounded-md transition-colors flex items-center gap-2 ${
+                      className={`flex-1 min-w-0 text-left px-2.5 py-2 text-sm hover:bg-muted rounded-lg transition-smooth flex items-center gap-2.5 ${
                         currentProject?.id === proj.id ? "text-foreground font-medium" : "text-muted-foreground"
                       }`}
                     >
@@ -185,7 +197,7 @@ const TopBar = () => {
                     type="button"
                     onClick={handleNewProject}
                     disabled={creating}
-                    className="w-full text-left px-4 py-2.5 text-sm text-primary font-medium hover:bg-muted transition-colors flex items-center gap-2"
+                    className="w-full text-left px-4 py-2.5 text-sm text-primary font-medium hover:bg-muted transition-smooth flex items-center gap-2 rounded-lg mx-0"
                   >
                     <Plus className="w-4 h-4" />
                     New project
@@ -252,10 +264,10 @@ const TopBar = () => {
         </DialogContent>
       </Dialog>
 
-      <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+      <div className="flex items-center gap-1 md:gap-1.5 flex-shrink-0">
         <Link
           href="/analytics"
-          className="hidden md:flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="hidden md:flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-smooth focus-ring"
         >
           <BarChart3 className="w-4 h-4" aria-hidden />
           <span>Analytics</span>
@@ -263,7 +275,7 @@ const TopBar = () => {
         <button
           type="button"
           onClick={() => toast.info("Share coming soon")}
-          className="hidden md:flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="hidden md:flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-smooth focus-ring"
           title="Share (coming soon)"
           aria-label="Share (coming soon)"
         >
@@ -272,7 +284,7 @@ const TopBar = () => {
         </button>
         <Link
           href="/settings"
-          className="hidden md:flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="hidden md:flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-smooth focus-ring"
         >
           <Settings className="w-4 h-4" aria-hidden />
           <span>Settings</span>
@@ -282,7 +294,7 @@ const TopBar = () => {
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex-shrink-0 transition-transform hover:scale-[1.02] active:scale-[0.98]"
+              className="rounded-full focus-ring flex-shrink-0 transition-transform duration-200 hover:scale-105 active:scale-95"
               aria-label="Account menu"
             >
               <div className="w-9 h-9 rounded-full tofu-gradient flex items-center justify-center text-primary-foreground text-sm font-medium shadow-sm">

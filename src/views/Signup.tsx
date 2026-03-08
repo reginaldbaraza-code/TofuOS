@@ -25,7 +25,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle, Bot } from "lucide-react";
+import { AlertCircle, CheckCircle, Bot, Eye, EyeOff } from "lucide-react";
 
 const signupSchema = z
   .object({
@@ -44,6 +44,8 @@ const Signup = () => {
   const router = useRouter();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -71,7 +73,6 @@ const Signup = () => {
       return;
     }
 
-    // Supabase may require email confirmation depending on project settings
     if (data?.user && !data.session) {
       setEmailSent(true);
       return;
@@ -82,10 +83,14 @@ const Signup = () => {
 
   if (emailSent) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md border-border shadow-sm">
-          <CardHeader className="space-y-1 text-center">
-            <div className="mx-auto w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-2">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
+          <div className="absolute -top-[40%] -right-[20%] w-[60%] h-[60%] rounded-full bg-primary/5 blur-3xl" />
+          <div className="absolute -bottom-[30%] -left-[15%] w-[50%] h-[50%] rounded-full bg-tofu-warm/5 blur-3xl" />
+        </div>
+        <Card className="w-full max-w-md border-border shadow-lg relative animate-scale-in">
+          <CardHeader className="space-y-1 text-center pb-6">
+            <div className="mx-auto w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-3">
               <CheckCircle className="h-6 w-6 text-primary" />
             </div>
             <CardTitle className="text-2xl font-semibold tracking-tight">
@@ -106,11 +111,17 @@ const Signup = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md border-border shadow-sm">
-        <CardHeader className="space-y-1 text-center">
-          <div className="mx-auto w-10 h-10 rounded-lg tofu-gradient flex items-center justify-center mb-2">
-            <Bot className="w-5 h-5 text-primary-foreground" />
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
+      {/* Decorative background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
+        <div className="absolute -top-[40%] -right-[20%] w-[60%] h-[60%] rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute -bottom-[30%] -left-[15%] w-[50%] h-[50%] rounded-full bg-tofu-warm/5 blur-3xl" />
+      </div>
+
+      <Card className="w-full max-w-md border-border shadow-lg relative animate-scale-in">
+        <CardHeader className="space-y-1 text-center pb-6">
+          <div className="mx-auto w-12 h-12 rounded-2xl tofu-gradient flex items-center justify-center mb-3 shadow-md">
+            <Bot className="w-6 h-6 text-primary-foreground" />
           </div>
           <CardTitle className="text-2xl font-semibold tracking-tight">
             Create an account
@@ -121,7 +132,7 @@ const Signup = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           {submitError && (
-            <Alert variant="destructive" className="text-left">
+            <Alert variant="destructive" className="text-left animate-fade-in">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Sign up failed</AlertTitle>
               <AlertDescription>{submitError}</AlertDescription>
@@ -160,17 +171,29 @@ const Signup = () => {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="••••••••"
-                        autoComplete="new-password"
-                        disabled={isSubmitting}
-                        {...field}
-                        onChange={(e) => {
-                          setSubmitError(null);
-                          field.onChange(e);
-                        }}
-                      />
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          autoComplete="new-password"
+                          disabled={isSubmitting}
+                          className="pr-10"
+                          {...field}
+                          onChange={(e) => {
+                            setSubmitError(null);
+                            field.onChange(e);
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-0.5"
+                          tabIndex={-1}
+                          aria-label={showPassword ? "Hide password" : "Show password"}
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -183,17 +206,29 @@ const Signup = () => {
                   <FormItem>
                     <FormLabel>Confirm password</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="••••••••"
-                        autoComplete="new-password"
-                        disabled={isSubmitting}
-                        {...field}
-                        onChange={(e) => {
-                          setSubmitError(null);
-                          field.onChange(e);
-                        }}
-                      />
+                      <div className="relative">
+                        <Input
+                          type={showConfirmPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          autoComplete="new-password"
+                          disabled={isSubmitting}
+                          className="pr-10"
+                          {...field}
+                          onChange={(e) => {
+                            setSubmitError(null);
+                            field.onChange(e);
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-0.5"
+                          tabIndex={-1}
+                          aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                        >
+                          {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -201,7 +236,7 @@ const Signup = () => {
               />
               <Button
                 type="submit"
-                className="w-full tofu-gradient text-primary-foreground hover:opacity-90"
+                className="w-full tofu-gradient text-primary-foreground hover:opacity-90 shadow-sm"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? "Creating account…" : "Create account"}
@@ -209,7 +244,7 @@ const Signup = () => {
             </form>
           </Form>
 
-          <p className="text-xs text-center text-muted-foreground">
+          <p className="text-xs text-center text-muted-foreground pt-1">
             Already have an account?{" "}
             <Link href="/login" className="text-primary font-medium hover:underline">
               Sign in

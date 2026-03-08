@@ -140,14 +140,17 @@ const Settings = () => {
           </Button>
           <h1 className="text-lg font-semibold text-foreground">Settings</h1>
         </div>
+        <div className="h-0.5 tofu-gradient opacity-30" />
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-8">
         {/* Account */}
         <Card className="border-border">
           <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <User className="w-4 h-4" />
+            <CardTitle className="text-base flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                <User className="w-4 h-4 text-primary" />
+              </div>
               Account
             </CardTitle>
             <CardDescription>Your account and sign-in</CardDescription>
@@ -160,7 +163,7 @@ const Settings = () => {
             <Button
               variant="outline"
               onClick={() => signOut()}
-              className="gap-2 text-muted-foreground hover:text-foreground"
+              className="gap-2 text-muted-foreground hover:text-foreground transition-smooth"
             >
               <LogOut className="w-4 h-4" />
               Sign out
@@ -171,8 +174,10 @@ const Settings = () => {
         {/* Appearance */}
         <Card className="border-border">
           <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Sun className="w-4 h-4" />
+            <CardTitle className="text-base flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                <Sun className="w-4 h-4 text-amber-600" />
+              </div>
               Appearance
             </CardTitle>
             <CardDescription>
@@ -213,8 +218,10 @@ const Settings = () => {
         {/* Integrations */}
         <Card className="border-border">
           <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Key className="w-4 h-4" />
+            <CardTitle className="text-base flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                <Key className="w-4 h-4 text-emerald-600" />
+              </div>
               Integrations
             </CardTitle>
             <CardDescription>Connect Jira and configure AI</CardDescription>
@@ -265,8 +272,10 @@ const Settings = () => {
         {/* Projects */}
         <Card className="border-border">
           <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <FolderOpen className="w-4 h-4" />
+            <CardTitle className="text-base flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                <FolderOpen className="w-4 h-4 text-blue-600" />
+              </div>
               Projects
             </CardTitle>
             <CardDescription>
@@ -356,8 +365,10 @@ const Settings = () => {
         {/* About */}
         <Card className="border-border">
           <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Info className="w-4 h-4" />
+            <CardTitle className="text-base flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center">
+                <Info className="w-4 h-4 text-muted-foreground" />
+              </div>
               About
             </CardTitle>
             <CardDescription>App and help</CardDescription>

@@ -47,21 +47,22 @@ interface StudioItem {
   label: string;
   icon: React.ReactNode;
   color: string;
+  bgColor: string;
 }
 
 const studioItems: StudioItem[] = [
-  { id: "insights", label: "Analyze sources / Insights", icon: <Lightbulb className="w-4 h-4" />, color: "text-tofu-warm" },
-  { id: "prd", label: "PRD", icon: <FileText className="w-4 h-4" />, color: "text-primary" },
-  { id: "coding-rules", label: "AI Coding Rules & Standards", icon: <Code className="w-4 h-4" />, color: "text-tofu-warm" },
-  { id: "api-docs", label: "API Documentation", icon: <BookOpen className="w-4 h-4" />, color: "text-primary" },
-  { id: "accessibility", label: "Accessibility Compliance", icon: <CheckSquare className="w-4 h-4" />, color: "text-tofu-warm" },
-  { id: "architecture", label: "App Architecture Plan", icon: <LayoutDashboard className="w-4 h-4" />, color: "text-primary" },
-  { id: "bug-fix", label: "Bug Investigation & Fix Plan", icon: <Bug className="w-4 h-4" />, color: "text-destructive" },
-  { id: "competitive", label: "Competitive Analysis Report", icon: <BarChart3 className="w-4 h-4" />, color: "text-tofu-warm" },
-  { id: "journey-map", label: "Customer Journey Map", icon: <Users className="w-4 h-4" />, color: "text-primary" },
-  { id: "db-schema", label: "Database Schema Design", icon: <Database className="w-4 h-4" />, color: "text-tofu-warm" },
-  { id: "feature-spec", label: "Feature Implementation Spec", icon: <Rocket className="w-4 h-4" />, color: "text-primary" },
-  { id: "gtm", label: "Go-to-Market Plan", icon: <Map className="w-4 h-4" />, color: "text-tofu-warm" },
+  { id: "insights", label: "Analyze sources / Insights", icon: <Lightbulb className="w-4 h-4" />, color: "text-tofu-warm", bgColor: "bg-orange-500/10" },
+  { id: "prd", label: "PRD", icon: <FileText className="w-4 h-4" />, color: "text-primary", bgColor: "bg-primary/10" },
+  { id: "coding-rules", label: "AI Coding Rules & Standards", icon: <Code className="w-4 h-4" />, color: "text-tofu-warm", bgColor: "bg-orange-500/10" },
+  { id: "api-docs", label: "API Documentation", icon: <BookOpen className="w-4 h-4" />, color: "text-primary", bgColor: "bg-primary/10" },
+  { id: "accessibility", label: "Accessibility Compliance", icon: <CheckSquare className="w-4 h-4" />, color: "text-tofu-warm", bgColor: "bg-orange-500/10" },
+  { id: "architecture", label: "App Architecture Plan", icon: <LayoutDashboard className="w-4 h-4" />, color: "text-primary", bgColor: "bg-primary/10" },
+  { id: "bug-fix", label: "Bug Investigation & Fix Plan", icon: <Bug className="w-4 h-4" />, color: "text-destructive", bgColor: "bg-destructive/10" },
+  { id: "competitive", label: "Competitive Analysis Report", icon: <BarChart3 className="w-4 h-4" />, color: "text-tofu-warm", bgColor: "bg-orange-500/10" },
+  { id: "journey-map", label: "Customer Journey Map", icon: <Users className="w-4 h-4" />, color: "text-primary", bgColor: "bg-primary/10" },
+  { id: "db-schema", label: "Database Schema Design", icon: <Database className="w-4 h-4" />, color: "text-tofu-warm", bgColor: "bg-orange-500/10" },
+  { id: "feature-spec", label: "Feature Implementation Spec", icon: <Rocket className="w-4 h-4" />, color: "text-primary", bgColor: "bg-primary/10" },
+  { id: "gtm", label: "Go-to-Market Plan", icon: <Map className="w-4 h-4" />, color: "text-tofu-warm", bgColor: "bg-orange-500/10" },
 ];
 
 const StudioPanel = ({ mobile }: { mobile?: boolean }) => {
@@ -257,31 +258,33 @@ const StudioPanel = ({ mobile }: { mobile?: boolean }) => {
         <button
           type="button"
           onClick={() => setGridLayout(!gridLayout)}
-          className="p-1 rounded hover:bg-muted transition-colors"
+          className="p-1.5 rounded-lg hover:bg-muted transition-smooth text-muted-foreground hover:text-foreground"
           title={gridLayout ? "List layout" : "Grid layout"}
         >
           {gridLayout ? (
-            <List className="w-4 h-4 text-muted-foreground" />
+            <List className="w-4 h-4" />
           ) : (
-            <LayoutGrid className="w-4 h-4 text-muted-foreground" />
+            <LayoutGrid className="w-4 h-4" />
           )}
         </button>
       </div>
 
       <div className="flex-shrink-0 overflow-y-auto p-3">
-        <div className={gridLayout ? "grid grid-cols-2 gap-2" : "flex flex-col gap-2"}>
+        <div className={gridLayout ? "grid grid-cols-2 gap-2" : "flex flex-col gap-1.5"}>
           {studioItems.map((item) => (
             <button
               key={item.id}
               type="button"
               onClick={() => handleDocumentCardClick(item)}
-              className={`flex items-center gap-2.5 p-3.5 rounded-xl text-left transition-all group border-2 studio-card-bg studio-card-hover border-transparent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+              className={`flex items-center gap-2.5 p-3 rounded-xl text-left transition-all group border studio-card-bg studio-card-hover focus-ring ${
                 activeItem === item.id
                   ? "bg-primary/10 border-primary/30 shadow-sm"
-                  : "hover:border-border"
+                  : "border-transparent hover:border-border hover:shadow-sm"
               }`}
             >
-              <span className={item.color}>{item.icon}</span>
+              <div className={`w-7 h-7 rounded-lg ${item.bgColor} flex items-center justify-center shrink-0`}>
+                <span className={item.color}>{item.icon}</span>
+              </div>
               <span className="text-xs font-medium text-foreground leading-tight flex-1">
                 {item.label}
               </span>
@@ -291,45 +294,55 @@ const StudioPanel = ({ mobile }: { mobile?: boolean }) => {
         </div>
       </div>
 
-      {/* Loader + document list only (no inline editor) */}
+      {/* Loader + document list */}
       <div className="flex-1 min-h-0 flex flex-col border-t border-border bg-background overflow-hidden">
-        {loading ? (
-          <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-muted/30">
-            <RefreshCw className="w-6 h-6 animate-spin text-muted-foreground shrink-0" />
+        {loading && (
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-muted/20 animate-fade-in">
+            <div className="w-8 h-8 rounded-lg tofu-gradient-subtle flex items-center justify-center">
+              <RefreshCw className="w-4 h-4 animate-spin text-primary" />
+            </div>
             <div>
               <p className="text-sm font-medium text-foreground">Generating {loadingLabel}…</p>
               <p className="text-xs text-muted-foreground">based on {selectedSourceIds.length} source{selectedSourceIds.length !== 1 ? "s" : ""}</p>
             </div>
           </div>
-        ) : null}
+        )}
 
-        {!loading && documents.length === 0 ? (
-          <div className="flex flex-col items-center justify-center text-center py-6 px-4 text-muted-foreground">
-            <FileText className="w-8 h-8 mb-2 opacity-50" />
-            <p className="text-xs leading-relaxed">
-              Select sources in the left panel, then click a document type above to generate. Open a document from the list to view or edit.
+        {!loading && documents.length === 0 && (
+          <div className="flex flex-col items-center justify-center text-center py-8 px-4 text-muted-foreground animate-fade-in">
+            <div className="w-12 h-12 rounded-2xl tofu-gradient-subtle flex items-center justify-center mb-3">
+              <FileText className="w-5 h-5 text-primary/60" />
+            </div>
+            <p className="text-sm font-medium text-foreground mb-1">No documents yet</p>
+            <p className="text-xs leading-relaxed max-w-[220px]">
+              Select sources, then click a document type above to generate.
             </p>
           </div>
-        ) : null}
+        )}
 
-        {/* List of generated documents */}
-        {documents.length > 0 ? (
+        {/* Documents list */}
+        {documents.length > 0 && (
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <p className="text-xs font-medium text-muted-foreground px-3 py-2 sticky top-0 bg-background border-b border-border">Generated documents</p>
+            <div className="flex items-center justify-between px-3 py-2 sticky top-0 bg-background border-b border-border z-10">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Documents</p>
+              <span className="text-[10px] text-muted-foreground tabular-nums">{documents.length}</span>
+            </div>
             <ul className="space-y-0.5 p-2 pb-4">
               {documents.map((doc) => (
                 <li
                   key={doc.id}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg group ${
+                  className={`flex items-center gap-2 px-3 py-2.5 rounded-xl group transition-smooth ${
                     documentModalDoc?.id === doc.id ? "bg-primary/10" : "hover:bg-muted/50"
                   }`}
                 >
                   <button
                     type="button"
                     onClick={() => handleOpenDocument(doc)}
-                    className="flex-1 min-w-0 flex items-center gap-2 text-left"
+                    className="flex-1 min-w-0 flex items-center gap-2.5 text-left"
                   >
-                    <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <div className="w-8 h-8 rounded-lg bg-muted/60 flex items-center justify-center shrink-0">
+                      <FileText className="w-4 h-4 text-muted-foreground" />
+                    </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-foreground truncate">{doc.label}</p>
                       <p className="text-xs text-muted-foreground">
@@ -341,7 +354,7 @@ const StudioPanel = ({ mobile }: { mobile?: boolean }) => {
                     <DropdownMenuTrigger asChild>
                       <button
                         type="button"
-                        className="p-1.5 rounded hover:bg-muted sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                        className="p-1.5 rounded-lg hover:bg-muted sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                         aria-label="Options"
                       >
                         <MoreVertical className="w-4 h-4 text-muted-foreground" />
@@ -370,22 +383,22 @@ const StudioPanel = ({ mobile }: { mobile?: boolean }) => {
               ))}
             </ul>
           </div>
-        ) : null}
+        )}
       </div>
-      {error && <p className="text-xs text-destructive px-4 py-2 flex-shrink-0">{error}</p>}
+      {error && <p className="text-xs text-destructive px-4 py-2 flex-shrink-0 border-t border-border">{error}</p>}
 
       {/* Document view/edit popup */}
       <Dialog open={!!documentModalDoc} onOpenChange={(open) => !open && handleCloseDocumentModal()}>
         <DialogContent className="z-[60] max-w-3xl h-[85vh] max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden w-[95vw] sm:w-full">
-          <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border flex-shrink-0 pr-12">
+          <div className="flex items-center justify-between gap-3 px-5 py-3 border-b border-border flex-shrink-0 pr-12">
             <DialogHeader className="min-w-0 flex-1">
               <DialogTitle className="text-base truncate">{documentModalDoc?.label}</DialogTitle>
             </DialogHeader>
-            <div className="flex items-center gap-1 flex-shrink-0">
+            <div className="flex items-center gap-0.5 flex-shrink-0">
               <button
                 type="button"
                 onClick={handleSaveModalDocument}
-                className="text-xs font-medium text-primary hover:underline px-2"
+                className="px-3 py-1.5 rounded-lg text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 transition-smooth"
               >
                 Save
               </button>
@@ -395,7 +408,7 @@ const StudioPanel = ({ mobile }: { mobile?: boolean }) => {
                   navigator.clipboard.writeText(modalContent);
                   toast.success("Copied");
                 }}
-                className="p-2 rounded hover:bg-muted"
+                className="p-2 rounded-lg hover:bg-muted transition-smooth"
                 title="Copy"
               >
                 <Copy className="w-4 h-4 text-muted-foreground" />
@@ -403,20 +416,20 @@ const StudioPanel = ({ mobile }: { mobile?: boolean }) => {
               <button
                 type="button"
                 onClick={() => documentModalDoc && downloadAsPdf(modalContent, documentModalDoc.label)}
-                className="p-2 rounded hover:bg-muted flex items-center gap-1"
+                className="p-2 rounded-lg hover:bg-muted transition-smooth flex items-center gap-1"
                 title="Download PDF"
               >
                 <Download className="w-4 h-4 text-muted-foreground" />
-                <span className="text-xs hidden sm:inline">Download</span>
+                <span className="text-xs hidden sm:inline text-muted-foreground">Download</span>
               </button>
               <button
                 type="button"
                 onClick={handleRegenerateModalDocument}
-                className="p-2 rounded hover:bg-muted flex items-center gap-1"
+                className="p-2 rounded-lg hover:bg-muted transition-smooth flex items-center gap-1"
                 title="Regenerate"
               >
                 <RefreshCw className="w-4 h-4 text-muted-foreground" />
-                <span className="text-xs hidden sm:inline">Regenerate</span>
+                <span className="text-xs hidden sm:inline text-muted-foreground">Regenerate</span>
               </button>
             </div>
           </div>
@@ -424,7 +437,7 @@ const StudioPanel = ({ mobile }: { mobile?: boolean }) => {
             <textarea
               value={modalContent}
               onChange={(e) => setModalContent(e.target.value)}
-              className="flex-1 min-h-[200px] w-full p-4 text-sm font-mono whitespace-pre-wrap resize-none focus:outline-none focus:ring-0 border-0 bg-transparent overflow-auto"
+              className="flex-1 min-h-[200px] w-full p-5 text-sm font-mono whitespace-pre-wrap resize-none focus:outline-none focus:ring-0 border-0 bg-transparent overflow-auto leading-relaxed"
               spellCheck={false}
             />
           </div>

@@ -25,7 +25,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Bot } from "lucide-react";
+import { AlertCircle, Bot, Eye, EyeOff } from "lucide-react";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -37,6 +37,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 const Login = () => {
   const router = useRouter();
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -64,11 +65,17 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md border-border shadow-sm">
-        <CardHeader className="space-y-1 text-center">
-          <div className="mx-auto w-10 h-10 rounded-lg tofu-gradient flex items-center justify-center mb-2">
-            <Bot className="w-5 h-5 text-primary-foreground" />
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
+      {/* Decorative background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
+        <div className="absolute -top-[40%] -right-[20%] w-[60%] h-[60%] rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute -bottom-[30%] -left-[15%] w-[50%] h-[50%] rounded-full bg-tofu-warm/5 blur-3xl" />
+      </div>
+
+      <Card className="w-full max-w-md border-border shadow-lg relative animate-scale-in">
+        <CardHeader className="space-y-1 text-center pb-6">
+          <div className="mx-auto w-12 h-12 rounded-2xl tofu-gradient flex items-center justify-center mb-3 shadow-md">
+            <Bot className="w-6 h-6 text-primary-foreground" />
           </div>
           <CardTitle className="text-2xl font-semibold tracking-tight">
             Sign in to tofuOS
@@ -79,7 +86,7 @@ const Login = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           {submitError && (
-            <Alert variant="destructive" className="text-left">
+            <Alert variant="destructive" className="text-left animate-fade-in">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Login failed</AlertTitle>
               <AlertDescription>{submitError}</AlertDescription>
@@ -118,17 +125,29 @@ const Login = () => {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="••••••••"
-                        autoComplete="current-password"
-                        disabled={isSubmitting}
-                        {...field}
-                        onChange={(e) => {
-                          setSubmitError(null);
-                          field.onChange(e);
-                        }}
-                      />
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          autoComplete="current-password"
+                          disabled={isSubmitting}
+                          className="pr-10"
+                          {...field}
+                          onChange={(e) => {
+                            setSubmitError(null);
+                            field.onChange(e);
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-0.5"
+                          tabIndex={-1}
+                          aria-label={showPassword ? "Hide password" : "Show password"}
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -136,7 +155,7 @@ const Login = () => {
               />
               <Button
                 type="submit"
-                className="w-full tofu-gradient text-primary-foreground hover:opacity-90"
+                className="w-full tofu-gradient text-primary-foreground hover:opacity-90 shadow-sm"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? "Signing in…" : "Sign in"}
@@ -144,7 +163,7 @@ const Login = () => {
             </form>
           </Form>
 
-          <p className="text-xs text-center text-muted-foreground">
+          <p className="text-xs text-center text-muted-foreground pt-1">
             Don&apos;t have an account?{" "}
             <Link href="/signup" className="text-primary font-medium hover:underline">
               Create one

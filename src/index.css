@@ -3,6 +3,28 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Micro-animation keyframes ─── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
 @layer base {
   :root {
     --background: 40 30% 97%;
@@ -34,10 +56,16 @@
     --ring: 24 80% 50%;
 
     --radius: 0.75rem;
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04);
-    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.04);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.04);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.06), 0 4px 6px -4px rgb(0 0 0 / 0.04);
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+    --shadow-lg: 0 10px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.04);
+    --shadow-xl: 0 20px 40px -8px rgb(0 0 0 / 0.1), 0 8px 16px -4px rgb(0 0 0 / 0.06);
+
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
 
     --sidebar-background: 30 15% 98%;
     --sidebar-foreground: 30 8% 30%;
@@ -71,13 +99,13 @@
     --secondary: 30 10% 16%;
     --secondary-foreground: 40 20% 85%;
     --muted: 30 8% 18%;
-    --muted-foreground: 35 12% 62%;
+    --muted-foreground: 35 12% 65%;
     --accent: 24 70% 55%;
     --accent-foreground: 30 10% 8%;
     --destructive: 0 62% 30%;
     --destructive-foreground: 40 20% 92%;
-    --border: 30 8% 20%;
-    --input: 30 8% 20%;
+    --border: 30 8% 22%;
+    --input: 30 8% 22%;
     --ring: 24 80% 55%;
     --sidebar-background: 30 10% 6%;
     --sidebar-foreground: 40 15% 80%;
@@ -96,10 +124,16 @@
     --chat-input-bg: 30 10% 12%;
     --tofu-warm: 28 65% 55%;
     --tofu-cream: 30 12% 16%;
-    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.2);
-    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.15), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-md: 0 10px 15px -3px rgb(0 0 0 / 0.15), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.15), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.25);
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.12);
+    --shadow-md: 0 10px 15px -3px rgb(0 0 0 / 0.2), 0 4px 6px -4px rgb(0 0 0 / 0.12);
+    --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.2), 0 8px 10px -6px rgb(0 0 0 / 0.12);
+    --shadow-xl: 0 24px 48px -12px rgb(0 0 0 / 0.25), 0 12px 24px -8px rgb(0 0 0 / 0.15);
+
+    --success: 142 76% 42%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 55%;
+    --warning-foreground: 0 0% 100%;
   }
 }
 
@@ -139,8 +173,11 @@
   .tofu-gradient {
     background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--tofu-warm)));
   }
+  .tofu-gradient-subtle {
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.08), hsl(var(--tofu-warm) / 0.08));
+  }
   .transition-smooth {
-    transition-property: color, background-color, border-color, box-shadow;
+    transition-property: color, background-color, border-color, box-shadow, transform, opacity;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 150ms;
   }
@@ -152,5 +189,33 @@
   }
   .font-mono {
     font-family: 'JetBrains Mono', monospace;
+  }
+  /* Reusable focus ring */
+  .focus-ring {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  }
+  /* Glass morphism panel */
+  .glass {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background-color: hsl(var(--background) / 0.8);
+  }
+  /* Animations */
+  .animate-fade-in {
+    animation: fadeIn 0.2s ease-out both;
+  }
+  .animate-slide-up {
+    animation: slideUp 0.25s ease-out both;
+  }
+  .animate-scale-in {
+    animation: scaleIn 0.2s ease-out both;
+  }
+  .animate-shimmer {
+    background: linear-gradient(90deg, hsl(var(--muted)) 25%, hsl(var(--muted-foreground) / 0.08) 50%, hsl(var(--muted)) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+  .animate-pulse-soft {
+    animation: pulse-soft 2s ease-in-out infinite;
   }
 }
