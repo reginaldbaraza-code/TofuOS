@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { PageHeader, Card, Button, Badge, EmptyState, Skeleton } from "@/components/ui";
+import { Users, Search, MessageCircle, Trash2 } from "lucide-react";
 
 interface Persona {
   id: string;
@@ -25,7 +27,7 @@ export default function PersonasPage() {
     fetch("/api/personas")
       .then((r) => r.json())
       .then((data) => {
-        setPersonas(data);
+        setPersonas(Array.isArray(data) ? data : []);
         setLoading(false);
       });
   }, []);
@@ -57,132 +59,113 @@ export default function PersonasPage() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-sm animate-pulse-slow" style={{ color: "var(--muted)" }}>Loading...</div>
+      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+        <Skeleton className="mb-8 h-10 w-48" />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i} padding="md">
+              <Skeleton className="mb-3 h-12 w-12 rounded-[var(--radius-lg)]" />
+              <Skeleton className="h-5 w-3/4" />
+              <Skeleton className="mt-2 h-4 w-full" />
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--foreground)" }}>
-            Personas
-          </h1>
-          <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>
-            {personas.length} persona{personas.length !== 1 ? "s" : ""} in your library
-          </p>
-        </div>
-        <Link
-          href="/personas/new"
-          className="rounded-xl px-4 py-2.5 text-sm font-medium text-white transition-all hover:opacity-90"
-          style={{ background: "var(--accent)" }}
-        >
-          + New Persona
-        </Link>
-      </div>
+    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+      <PageHeader
+        title="Personas"
+        description={`${personas.length} persona${personas.length !== 1 ? "s" : ""} in your library. Create and interview PM personas.`}
+        action={
+          <Link href="/personas/new">
+            <Button leftIcon={<Users className="h-4 w-4" />}>
+              New persona
+            </Button>
+          </Link>
+        }
+      />
 
       {personas.length > 3 && (
-        <div className="mb-5">
-          <input
-            type="text"
-            placeholder="Filter by name, role, company, or industry..."
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="w-full rounded-xl border px-4 py-2.5 text-sm transition-all"
-            style={{
-              background: "var(--card)",
-              borderColor: "var(--card-border)",
-              color: "var(--foreground)",
-            }}
-          />
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" />
+            <input
+              type="text"
+              placeholder="Filter by name, role, company, or industry..."
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="w-full rounded-[var(--radius-xl)] border border-[var(--card-border)] bg-[var(--card)] py-2.5 pl-10 pr-4 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-glow)]"
+            />
+          </div>
         </div>
       )}
 
       {personas.length === 0 ? (
-        <div
-          className="rounded-2xl border border-dashed p-8 text-center sm:p-12"
-          style={{ borderColor: "var(--card-border)" }}
-        >
-          <p className="mb-2 text-5xl">👥</p>
-          <p className="text-base font-medium" style={{ color: "var(--foreground)" }}>
-            No personas yet
-          </p>
-          <p className="mb-6 text-sm" style={{ color: "var(--muted)" }}>
-            Create a persona from scratch, use a template, or let AI generate one for you
-          </p>
-          <Link
-            href="/personas/new"
-            className="inline-flex rounded-xl px-5 py-2.5 text-sm font-medium text-white transition-all hover:opacity-90"
-            style={{ background: "var(--accent)" }}
-          >
-            Create Your First Persona
-          </Link>
-        </div>
+        <EmptyState
+          icon="👥"
+          title="No personas yet"
+          description="Create a persona from a template, quick prompt, or build one from scratch. Then start interviewing."
+          action={{ label: "Create your first persona", href: "/personas/new" }}
+        />
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((persona, i) => (
-            <div
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {filtered.map((persona) => (
+            <Card
               key={persona.id}
-              className="group animate-fade-in rounded-2xl border p-5 transition-all hover:shadow-md"
-              style={{
-                background: "var(--card)",
-                borderColor: "var(--card-border)",
-                animationDelay: `${i * 50}ms`,
-                animationFillMode: "both",
-              }}
+              padding="md"
+              className="group transition-all hover:shadow-[var(--shadow-md)]"
             >
               <div className="mb-3 flex items-start justify-between">
                 <span className="text-4xl">{persona.avatarEmoji}</span>
                 <button
+                  type="button"
                   onClick={() => deletePersona(persona.id, persona.name)}
-                  className="rounded-lg p-1 text-xs opacity-0 transition-all group-hover:opacity-100 hover:opacity-70"
-                  style={{ color: "var(--danger)" }}
+                  className="rounded-[var(--radius-md)] p-1.5 text-[var(--muted)] opacity-0 transition-opacity hover:bg-[var(--danger-muted)] hover:text-[var(--danger)] group-hover:opacity-100"
                   title="Delete persona"
                 >
-                  ×
+                  <Trash2 className="h-4 w-4" />
                 </button>
               </div>
-              <h3 className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>
+              <p className="font-semibold text-[var(--foreground)]">
                 {persona.name}
-              </h3>
-              <p className="text-xs" style={{ color: "var(--muted)" }}>
-                {persona.role}
               </p>
+              <p className="text-sm text-[var(--muted)]">{persona.role}</p>
               {persona.company && (
-                <p className="text-xs" style={{ color: "var(--muted)" }}>{persona.company}</p>
+                <p className="text-sm text-[var(--muted)]">{persona.company}</p>
               )}
-              <div className="mt-1 flex items-center gap-2">
+              <div className="mt-2 flex flex-wrap items-center gap-2">
                 {persona.industry && (
-                  <span className="text-xs" style={{ color: "var(--muted)" }}>{persona.industry}</span>
+                  <Badge variant="muted">{persona.industry}</Badge>
                 )}
-                {persona.experienceYears && (
-                  <span className="text-xs" style={{ color: "var(--muted)" }}>· {persona.experienceYears}y exp</span>
+                {persona.experienceYears != null && (
+                  <span className="text-xs text-[var(--muted)]">
+                    {persona.experienceYears}y exp
+                  </span>
                 )}
               </div>
-
               <div className="mt-4 flex gap-2">
-                <button
+                <Button
+                  size="sm"
+                  className="flex-1"
+                  leftIcon={<MessageCircle className="h-4 w-4" />}
                   onClick={() => startInterview(persona.id)}
-                  className="flex-1 rounded-xl py-2 text-xs font-medium text-white transition-all hover:opacity-90"
-                  style={{ background: "var(--accent)" }}
                 >
                   Interview
-                </button>
-                <Link
-                  href={`/personas/${persona.id}`}
-                  className="rounded-xl px-3 py-2 text-xs font-medium transition-all hover:opacity-80"
-                  style={{ background: "var(--muted-bg)", color: "var(--foreground)" }}
-                >
-                  View
+                </Button>
+                <Link href={`/personas/${persona.id}`}>
+                  <Button size="sm" variant="outline">
+                    View
+                  </Button>
                 </Link>
               </div>
-
-              <p className="mt-2 text-center text-xs" style={{ color: "var(--muted)" }}>
-                {persona._count.interviews} {persona._count.interviews === 1 ? "interview" : "interviews"}
+              <p className="mt-2 text-center text-xs text-[var(--muted)]">
+                {persona._count.interviews} interview
+                {persona._count.interviews !== 1 ? "s" : ""}
               </p>
-            </div>
+            </Card>
           ))}
         </div>
       )}

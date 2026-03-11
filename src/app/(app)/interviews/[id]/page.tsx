@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { SUGGESTED_QUESTIONS } from "@/lib/prompts";
+import { Button } from "@/components/ui";
+import { Mic, MicOff, MessageCircle, ChevronRight, Sparkles } from "lucide-react";
 
 interface InterviewData {
   id: string;
@@ -31,6 +33,7 @@ export default function InterviewChatPage() {
   const [interview, setInterview] = useState<InterviewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showSuggestions, setShowSuggestions] = useState(true);
+  const [voiceMode, setVoiceMode] = useState(false); // Stub: ready for speech-to-text / text-to-speech
   const [ending, setEnding] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [input, setInput] = useState("");
@@ -162,75 +165,92 @@ export default function InterviewChatPage() {
     <div ref={containerRef} className="flex h-full max-h-full overflow-hidden">
       <div className="flex flex-1 flex-col min-h-0 min-w-0">
         <div
-          className="flex items-center justify-between border-b px-3 py-2 sm:px-5 sm:py-3 shrink-0"
-          style={{ background: "var(--card)", borderColor: "var(--card-border)" }}
+          className="flex items-center justify-between border-b px-4 py-3 sm:px-6 shrink-0"
+          style={{
+            background: "var(--card)",
+            borderColor: "var(--card-border)",
+          }}
         >
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">{interview.persona.avatarEmoji}</span>
-            <div>
-              <p className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="text-2xl shrink-0">{interview.persona.avatarEmoji}</span>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-[var(--foreground)] truncate">
                 {interview.persona.name}
               </p>
-              <p className="text-xs" style={{ color: "var(--muted)" }}>
+              <p className="text-xs text-[var(--muted)] truncate">
                 {interview.persona.role}
                 {interview.persona.company ? ` at ${interview.persona.company}` : ""}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-xs tabular-nums" style={{ color: "var(--muted)" }}>
+          <div className="flex items-center gap-2 shrink-0">
+            <span
+              className="font-mono text-xs tabular-nums text-[var(--muted)] hidden sm:inline"
+              aria-label="Elapsed time"
+            >
               {formatTime(elapsed)}
             </span>
             <button
-              onClick={() => setShowSuggestions(!showSuggestions)}
-              className="hidden rounded-lg px-3 py-1.5 text-xs font-medium transition-all sm:block"
-              style={{ background: "var(--muted-bg)", color: "var(--foreground)" }}
+              type="button"
+              onClick={() => setVoiceMode(!voiceMode)}
+              className={`rounded-[var(--radius-lg)] p-2.5 transition-colors ${
+                voiceMode ? "bg-[var(--accent-muted)] text-[var(--accent)]" : "text-[var(--muted)] hover:bg-[var(--muted-bg)]"
+              }`}
+              title={voiceMode ? "Voice mode on (coming soon)" : "Voice mode (coming soon)"}
+              aria-pressed={voiceMode}
             >
-              {showSuggestions ? "Hide" : "Show"} Questions
+              {voiceMode ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
             </button>
             <button
+              type="button"
+              onClick={() => setShowSuggestions(!showSuggestions)}
+              className="hidden sm:flex items-center gap-1.5 rounded-[var(--radius-lg)] px-3 py-2 text-xs font-medium text-[var(--muted)] hover:bg-[var(--muted-bg)] hover:text-[var(--foreground)] transition-colors"
+            >
+              <Sparkles className="h-4 w-4" />
+              {showSuggestions ? "Hide" : "Show"} questions
+            </button>
+            <Button
+              size="sm"
+              variant="danger"
               onClick={endInterview}
               disabled={ending || messages.length < 2}
-              className="rounded-lg px-3 py-1.5 text-xs font-medium text-white transition-all hover:opacity-90 disabled:opacity-50"
-              style={{ background: "var(--danger)" }}
             >
-              {ending ? "Analyzing..." : "End Interview"}
-            </button>
+              {ending ? "Analyzing…" : "End interview"}
+            </Button>
           </div>
         </div>
 
         {error && (
           <div
-            className="mx-auto max-w-2xl px-3 py-2 rounded-lg flex items-center justify-between gap-2"
-            style={{ background: "var(--danger)", color: "#fff" }}
+            className="mx-auto max-w-2xl px-4 py-3 rounded-[var(--radius-lg)] flex items-center justify-between gap-3 border border-[var(--danger)]/30 bg-[var(--danger-muted)]"
           >
-            <span className="text-sm">
+            <span className="text-sm text-[var(--danger)]">
               {error.message || "Something went wrong. Check that the Gemini API key is set (GOOGLE_GENERATIVE_AI_API_KEY) in your deployment."}
             </span>
             <button
               type="button"
               onClick={() => clearError()}
-              className="shrink-0 rounded px-2 py-1 text-xs font-medium hover:bg-white/20"
+              className="shrink-0 rounded-[var(--radius-md)] px-2 py-1 text-xs font-medium text-[var(--danger)] hover:bg-[var(--danger)]/10"
             >
               Dismiss
             </button>
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto px-3 py-4 sm:px-4 sm:py-6 min-h-0">
+        <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 min-h-0">
           {messages.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-8 sm:py-16 text-center">
-              <span className="mb-3 text-4xl sm:text-5xl">{interview.persona.avatarEmoji}</span>
-              <p className="text-sm font-medium" style={{ color: "var(--foreground)" }}>
+            <div className="flex flex-col items-center justify-center py-12 sm:py-20 text-center">
+              <span className="mb-4 text-5xl sm:text-6xl">{interview.persona.avatarEmoji}</span>
+              <p className="text-base font-medium text-[var(--foreground)]">
                 Interview with {interview.persona.name}
               </p>
-              <p className="mt-1 max-w-sm text-xs" style={{ color: "var(--muted)" }}>
-                Start the conversation by asking a question.
+              <p className="mt-2 max-w-sm text-sm text-[var(--muted)]">
+                Start the conversation by asking a question. Use the suggestions panel or type your own.
               </p>
             </div>
           )}
 
-          <div className="mx-auto max-w-2xl space-y-4">
+          <div className="mx-auto max-w-2xl space-y-5">
             {messages.map((msg) => {
               const text = getMessageText(msg);
               if (!text) return null;
@@ -240,16 +260,14 @@ export default function InterviewChatPage() {
                   className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate-fade-in`}
                 >
                   {msg.role === "assistant" && (
-                    <span className="mr-2 mt-1 shrink-0 text-lg">{interview.persona.avatarEmoji}</span>
+                    <span className="mr-2 mt-1 shrink-0 text-xl">{interview.persona.avatarEmoji}</span>
                   )}
                   <div
-                    className="max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap"
-                    style={{
-                      background: msg.role === "user" ? "var(--chat-user)" : "var(--chat-assistant)",
-                      color: msg.role === "user" ? "#ffffff" : "var(--foreground)",
-                      borderBottomRightRadius: msg.role === "user" ? "4px" : undefined,
-                      borderBottomLeftRadius: msg.role === "assistant" ? "4px" : undefined,
-                    }}
+                    className={`max-w-[85%] rounded-[var(--radius-xl)] px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
+                      msg.role === "user"
+                        ? "rounded-br-md bg-[var(--chat-user)] text-white"
+                        : "rounded-bl-md bg-[var(--chat-assistant)] text-[var(--foreground)]"
+                    }`}
                   >
                     {text}
                   </div>
@@ -259,15 +277,12 @@ export default function InterviewChatPage() {
 
             {isLoading && messages.length > 0 && messages[messages.length - 1]?.role === "user" && (
               <div className="flex items-start animate-fade-in">
-                <span className="mr-2 mt-1 text-lg">{interview.persona.avatarEmoji}</span>
-                <div
-                  className="rounded-2xl px-4 py-3 text-sm"
-                  style={{ background: "var(--chat-assistant)" }}
-                >
+                <span className="mr-2 mt-1 text-xl shrink-0">{interview.persona.avatarEmoji}</span>
+                <div className="rounded-[var(--radius-xl)] rounded-bl-md bg-[var(--chat-assistant)] px-4 py-3">
                   <span className="inline-flex gap-1">
-                    <span className="animate-pulse-slow" style={{ color: "var(--muted)" }}>●</span>
-                    <span className="animate-pulse-slow" style={{ color: "var(--muted)", animationDelay: "0.2s" }}>●</span>
-                    <span className="animate-pulse-slow" style={{ color: "var(--muted)", animationDelay: "0.4s" }}>●</span>
+                    <span className="animate-pulse-slow text-[var(--muted)]">●</span>
+                    <span className="animate-pulse-slow text-[var(--muted)]" style={{ animationDelay: "0.2s" }}>●</span>
+                    <span className="animate-pulse-slow text-[var(--muted)]" style={{ animationDelay: "0.4s" }}>●</span>
                   </span>
                 </div>
               </div>
@@ -277,8 +292,11 @@ export default function InterviewChatPage() {
           </div>
         </div>
 
-        <div className="border-t p-2 sm:p-4 shrink-0" style={{ borderColor: "var(--card-border)" }}>
-          <div className="mx-auto flex max-w-2xl gap-2">
+        <div
+          className="border-t p-3 sm:p-4 shrink-0"
+          style={{ borderColor: "var(--card-border)" }}
+        >
+          <div className="mx-auto flex max-w-2xl gap-3">
             <textarea
               ref={inputRef}
               value={input}
@@ -286,48 +304,44 @@ export default function InterviewChatPage() {
               onKeyDown={onKeyDown}
               placeholder="Ask a question..."
               rows={1}
-              className="flex-1 resize-none rounded-xl border px-3 py-2.5 text-sm transition-all sm:px-4 sm:py-3"
-              style={{
-                background: "var(--card)",
-                borderColor: "var(--card-border)",
-                color: "var(--foreground)",
-              }}
+              className="flex-1 resize-none rounded-[var(--radius-xl)] border border-[var(--card-border)] bg-[var(--card)] px-4 py-3 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] transition-colors focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-glow)] disabled:opacity-50"
               disabled={isLoading}
             />
-            <button
-              type="button"
+            <Button
               onClick={handleSend}
               disabled={!input.trim() || isLoading}
-              className="shrink-0 rounded-xl px-3 py-2.5 text-sm font-medium text-white transition-all hover:opacity-90 disabled:opacity-40 sm:px-4 sm:py-3"
-              style={{ background: "var(--accent)" }}
             >
               Send
-            </button>
+            </Button>
           </div>
         </div>
       </div>
 
       {showSuggestions && (
         <div
-          className="hidden w-72 shrink-0 overflow-y-auto border-l p-4 lg:block"
-          style={{ background: "var(--sidebar-bg)", borderColor: "var(--card-border)" }}
+          className="hidden w-80 shrink-0 overflow-y-auto border-l p-4 lg:block"
+          style={{
+            background: "var(--sidebar-bg)",
+            borderColor: "var(--card-border)",
+          }}
         >
-          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--muted)" }}>
-            Suggested Questions
+          <h3 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
+            <MessageCircle className="h-4 w-4" />
+            Suggested questions
           </h3>
           <div className="space-y-4">
             {SUGGESTED_QUESTIONS.map((category) => (
               <div key={category.category}>
-                <p className="mb-1.5 text-xs font-medium" style={{ color: "var(--foreground)" }}>
+                <p className="mb-2 text-xs font-medium text-[var(--foreground)]">
                   {category.category}
                 </p>
                 <div className="space-y-1">
                   {category.questions.map((q) => (
                     <button
                       key={q}
+                      type="button"
                       onClick={() => useSuggestion(q)}
-                      className="block w-full rounded-lg px-2.5 py-1.5 text-left text-xs leading-snug transition-all hover:opacity-80"
-                      style={{ color: "var(--muted)", background: "transparent" }}
+                      className="block w-full rounded-[var(--radius-lg)] px-3 py-2 text-left text-xs leading-snug text-[var(--muted)] transition-colors hover:bg-[var(--muted-bg)] hover:text-[var(--foreground)]"
                     >
                       {q}
                     </button>

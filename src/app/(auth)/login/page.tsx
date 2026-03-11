@@ -4,6 +4,8 @@ import { useState } from "react";
 import { createClient, hasSupabaseConfig } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Card, Button, Input } from "@/components/ui";
+import { MessageCircle } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -16,20 +18,17 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     setLoading(true);
-
     try {
       const supabase = createClient();
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-
       if (signInError) {
         setError("Invalid email or password");
         setLoading(false);
         return;
       }
-
       router.push("/dashboard");
       router.refresh();
     } catch (err) {
@@ -46,94 +45,71 @@ export default function LoginPage() {
 
   if (!hasSupabaseConfig()) {
     return (
-      <div className="flex min-h-dvh items-center justify-center px-4" style={{ background: "var(--background)" }}>
-        <div className="w-full max-w-md rounded-2xl border p-6 text-center" style={{ background: "var(--card)", borderColor: "var(--card-border)" }}>
-          <p className="mb-2 text-lg font-medium" style={{ color: "var(--foreground)" }}>Configuration required</p>
-          <p className="text-sm" style={{ color: "var(--muted)" }}>
-            Add <strong>NEXT_PUBLIC_SUPABASE_URL</strong> and <strong>NEXT_PUBLIC_SUPABASE_ANON_KEY</strong> in your Vercel project → Settings → Environment Variables, then redeploy.
+      <div className="flex min-h-dvh items-center justify-center px-4 bg-[var(--background)]">
+        <Card className="w-full max-w-md p-6 text-center" padding="none">
+          <p className="mb-2 text-lg font-medium text-[var(--foreground)]">
+            Configuration required
           </p>
-        </div>
+          <p className="text-sm text-[var(--muted)]">
+            Add <strong>NEXT_PUBLIC_SUPABASE_URL</strong> and{" "}
+            <strong>NEXT_PUBLIC_SUPABASE_ANON_KEY</strong> in your Vercel project
+            → Settings → Environment Variables, then redeploy.
+          </p>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-dvh items-center justify-center px-4" style={{ background: "var(--background)" }}>
+    <div className="flex min-h-dvh items-center justify-center px-4 bg-[var(--background)]">
       <div className="w-full max-w-sm animate-fade-in">
         <div className="mb-8 text-center">
-          <div className="mb-4 text-5xl">🎙️</div>
-          <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--foreground)" }}>
-            PM Interviews
+          <div
+            className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-[var(--radius-2xl)]"
+            style={{ background: "var(--accent)", color: "white" }}
+          >
+            <MessageCircle className="h-7 w-7" strokeWidth={2} />
+          </div>
+          <h1 className="text-2xl font-semibold tracking-tight text-[var(--foreground)]">
+            Tofu
           </h1>
-          <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>
-            Sign in to start interviewing
+          <p className="mt-2 text-sm text-[var(--muted)]">
+            Sign in to start interviewing PM personas
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div
-              className="rounded-xl px-4 py-3 text-sm"
-              style={{ background: "#ff3b3014", color: "var(--danger)" }}
-            >
+            <div className="rounded-[var(--radius-lg)] border border-[var(--danger)]/30 bg-[var(--danger-muted)] px-4 py-3 text-sm text-[var(--danger)]">
               {error}
             </div>
           )}
-
-          <div>
-            <label className="mb-1.5 block text-sm font-medium" style={{ color: "var(--foreground)" }}>
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full rounded-xl border px-4 py-3 text-sm transition-all"
-              style={{
-                background: "var(--card)",
-                borderColor: "var(--card-border)",
-                color: "var(--foreground)",
-              }}
-              placeholder="you@example.com"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-sm font-medium" style={{ color: "var(--foreground)" }}>
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full rounded-xl border px-4 py-3 text-sm transition-all"
-              style={{
-                background: "var(--card)",
-                borderColor: "var(--card-border)",
-                color: "var(--foreground)",
-              }}
-              placeholder="••••••••"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-xl py-3 text-sm font-medium text-white transition-all hover:opacity-90 disabled:opacity-50"
-            style={{ background: "var(--accent)" }}
-          >
-            {loading ? "Signing in..." : "Sign In"}
-          </button>
+          <Input
+            label="Email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            required
+          />
+          <Input
+            label="Password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            required
+          />
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Signing in…" : "Sign in"}
+          </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm" style={{ color: "var(--muted)" }}>
+        <p className="mt-6 text-center text-sm text-[var(--muted)]">
           Don&apos;t have an account?{" "}
           <Link
             href="/register"
-            className="font-medium transition-colors hover:opacity-80"
-            style={{ color: "var(--accent)" }}
+            className="font-medium text-[var(--accent)] transition-colors hover:underline"
           >
             Create one
           </Link>

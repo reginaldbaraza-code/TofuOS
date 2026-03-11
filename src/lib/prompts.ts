@@ -91,6 +91,32 @@ Return a JSON object with EXACTLY these fields:
 Make this persona feel REAL. Give them specific opinions, quirks, and a coherent worldview shaped by their experience. Their pain points should feel personal, not generic.`;
 }
 
+/** Single-line quick prompt for "PM at Mercedes" style generation */
+export function buildQuickPersonaPrompt(oneLiner: string): string {
+  return `Generate a deeply realistic Product Manager persona for a synthetic research interview, based ONLY on this short description: "${oneLiner}"
+
+Interpret the description flexibly: extract role, company, industry, seniority, or context (e.g. "Series A startup", "enterprise", "fintech") and create a full, believable persona.
+
+Return a JSON object with EXACTLY these fields (no other text):
+{
+  "name": "A realistic full name",
+  "avatarEmoji": "A single emoji that fits this person",
+  "age": <number, 26-50>,
+  "role": "Exact job title",
+  "company": "Company name (real or realistic fictional)",
+  "companySize": "e.g. 'Series B, ~120 employees'",
+  "industry": "Industry/domain",
+  "experienceYears": <number>,
+  "background": "3-4 sentences: career history, how they got into PM, current context.",
+  "toolsUsed": "Specific tools they use daily (realistic for their context).",
+  "painPoints": "5-7 specific pain points, 1-2 sentences each. Not generic—tied to their role and company.",
+  "communicationStyle": "How they communicate in interviews.",
+  "personality": "Key traits, strengths, rough edges."
+}
+
+Make the persona feel REAL and specific to the description.`;
+}
+
 export const SUGGESTED_QUESTIONS = [
   {
     category: "Getting Started",

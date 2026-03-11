@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateText } from "ai";
 import { google } from "@ai-sdk/google";
 import { getSession } from "@/lib/supabase/server";
-import { buildPersonaGenerationPrompt } from "@/lib/prompts";
+import { buildPersonaGenerationPrompt, buildQuickPersonaPrompt } from "@/lib/prompts";
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
@@ -11,9 +11,21 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const params = await req.json();
+    const body = await req.json();
+    const quickPrompt = typeof body.quickPrompt === "string" && body.quickPrompt.trim();
 
-    const prompt = buildPersonaGenerationPrompt(params);
+    const prompt = quickPrompt
+      ? buildQuickPersonaPrompt(body.quickPrompt.trim())
+      : buildPersonaGenerationPrompt({
+          role: body.role,
+          company: body.company,
+          companySize: body.companySize,
+          industry: body.industry,
+          experienceYears: body.experienceYears
+            ? parseInt(body.experienceYears, 10)
+            : undefined,
+          additionalContext: body.additionalContext,
+        });
 
     const { text } = await generateText({
       model: google(process.env.GEMINI_MODEL || "gemini-2.0-flash"),
