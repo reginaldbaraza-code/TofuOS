@@ -1,10 +1,12 @@
 /**
  * Shared Gemini model and retry helpers.
- * Free tier: use GEMINI_MODEL=gemini-1.5-flash (or gemini-2.5-flash) if you hit quota on gemini-2.0-flash.
+ * Use GEMINI_MODEL to override. Free tier: gemini-2.0-flash or gemini-2.5-flash
+ * (gemini-1.5-flash is deprecated and no longer available).
  */
 import { google } from "@ai-sdk/google";
 
-const DEFAULT_MODEL = "gemini-1.5-flash";
+// gemini-2.5-flash is on free tier; fallback to 2.0 if 2.5 not found in your region
+const DEFAULT_MODEL = "gemini-2.5-flash";
 
 export function getGeminiModel() {
   return google(process.env.GEMINI_MODEL || DEFAULT_MODEL);

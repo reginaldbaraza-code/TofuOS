@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const rawMessage = err instanceof Error ? err.message : "AI request failed.";
     const message = isQuotaError(err)
-      ? "Gemini quota exceeded. Try again in a minute, or set GEMINI_MODEL=gemini-1.5-flash in your environment for the free tier."
+      ? "Gemini quota exceeded. Try again in a minute, or set GEMINI_MODEL=gemini-2.0-flash in your environment."
       : rawMessage;
     return Response.json({ error: message }, { status: 502 });
   }

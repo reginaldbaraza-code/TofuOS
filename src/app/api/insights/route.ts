@@ -91,7 +91,7 @@ ${transcript}`,
     return NextResponse.json(insights);
   } catch (err) {
     const message = isQuotaError(err)
-      ? "Gemini quota exceeded. Wait a minute and try again, or set GEMINI_MODEL=gemini-1.5-flash for the free tier."
+      ? "Gemini quota exceeded. Wait a minute and try again, or set GEMINI_MODEL=gemini-2.0-flash for the free tier."
       : "Failed to generate insights.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
