@@ -38,7 +38,7 @@ export default function InterviewChatPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const { messages, sendMessage, status, setMessages } = useChat({
+  const { messages, sendMessage, status, setMessages, error, clearError } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/chat",
       body: { interviewId: params.id as string },
@@ -198,6 +198,24 @@ export default function InterviewChatPage() {
             </button>
           </div>
         </div>
+
+        {error && (
+          <div
+            className="mx-auto max-w-2xl px-3 py-2 rounded-lg flex items-center justify-between gap-2"
+            style={{ background: "var(--danger)", color: "#fff" }}
+          >
+            <span className="text-sm">
+              {error.message || "Something went wrong. Check that the Gemini API key is set (GOOGLE_GENERATIVE_AI_API_KEY) in your deployment."}
+            </span>
+            <button
+              type="button"
+              onClick={() => clearError()}
+              className="shrink-0 rounded px-2 py-1 text-xs font-medium hover:bg-white/20"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
 
         <div className="flex-1 overflow-y-auto px-3 py-4 sm:px-4 sm:py-6 min-h-0">
           {messages.length === 0 && (

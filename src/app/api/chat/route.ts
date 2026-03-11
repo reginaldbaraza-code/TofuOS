@@ -55,6 +55,14 @@ export async function POST(req: NextRequest) {
   const persona = (interviewRow as { persona: Record<string, unknown> }).persona;
   const systemPrompt = persona?.system_prompt as string;
 
+  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return Response.json(
+      { error: "AI is not configured. Set GOOGLE_GENERATIVE_AI_API_KEY or GEMINI_API_KEY in your environment." },
+      { status: 503 }
+    );
+  }
+
   const lastUserMessage = rawMessages[rawMessages.length - 1];
   if (lastUserMessage?.role === "user") {
     const textContent = extractText(lastUserMessage);
@@ -69,25 +77,30 @@ export async function POST(req: NextRequest) {
 
   const standardMessages = toStandardMessages(rawMessages);
 
-  const result = streamText({
-    model: google(process.env.GEMINI_MODEL || "gemini-2.0-flash"),
-    system: systemPrompt,
-    messages: standardMessages,
-    onFinish: async ({ text }) => {
-      if (text) {
-        await supabase.from("messages").insert({
-          interview_id: interviewId,
-          role: "assistant",
-          content: text,
-        });
-      }
-      await supabase
-        .from("interviews")
-        .update({ updated_at: new Date().toISOString() })
-        .eq("id", interviewId)
-        .eq("user_id", session.user.id);
-    },
-  });
+  try {
+    const result = streamText({
+      model: google(process.env.GEMINI_MODEL || "gemini-2.0-flash"),
+      system: systemPrompt,
+      messages: standardMessages,
+      onFinish: async ({ text }) => {
+        if (text) {
+          await supabase.from("messages").insert({
+            interview_id: interviewId,
+            role: "assistant",
+            content: text,
+          });
+        }
+        await supabase
+          .from("interviews")
+          .update({ updated_at: new Date().toISOString() })
+          .eq("id", interviewId)
+          .eq("user_id", session.user.id);
+      },
+    });
 
-  return result.toUIMessageStreamResponse();
+    return result.toUIMessageStreamResponse();
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "AI request failed.";
+    return Response.json({ error: message }, { status: 502 });
+  }
 }
