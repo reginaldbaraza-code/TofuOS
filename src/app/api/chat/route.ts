@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
 import { streamText } from "ai";
-import { google } from "@ai-sdk/google";
 import { getSession } from "@/lib/supabase/server";
 import { createClient } from "@/lib/supabase/server";
+import { getGeminiModel, isQuotaError } from "@/lib/gemini";
 
 interface UIMessageInput {
   role: string;
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const result = streamText({
-      model: google(process.env.GEMINI_MODEL || "gemini-2.0-flash"),
+      model: getGeminiModel(),
       system: systemPrompt,
       messages: standardMessages,
       onFinish: async ({ text }) => {
@@ -100,7 +100,10 @@ export async function POST(req: NextRequest) {
 
     return result.toUIMessageStreamResponse();
   } catch (err) {
-    const message = err instanceof Error ? err.message : "AI request failed.";
+    const rawMessage = err instanceof Error ? err.message : "AI request failed.";
+    const message = isQuotaError(err)
+      ? "Gemini quota exceeded. Try again in a minute, or set GEMINI_MODEL=gemini-1.5-flash in your environment for the free tier."
+      : rawMessage;
     return Response.json({ error: message }, { status: 502 });
   }
 }

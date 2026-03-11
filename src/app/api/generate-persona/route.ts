@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateText } from "ai";
-import { google } from "@ai-sdk/google";
 import { getSession } from "@/lib/supabase/server";
 import { buildPersonaGenerationPrompt, buildQuickPersonaPrompt } from "@/lib/prompts";
+import { getGeminiModel, withGeminiRetry, isQuotaError } from "@/lib/gemini";
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
@@ -27,11 +27,13 @@ export async function POST(req: NextRequest) {
           additionalContext: body.additionalContext,
         });
 
-    const { text } = await generateText({
-      model: google(process.env.GEMINI_MODEL || "gemini-2.0-flash"),
-      prompt,
-      temperature: 0.9,
-    });
+    const { text } = await withGeminiRetry(() =>
+      generateText({
+        model: getGeminiModel(),
+        prompt,
+        temperature: 0.9,
+      })
+    );
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
@@ -44,10 +46,10 @@ export async function POST(req: NextRequest) {
     const persona = JSON.parse(jsonMatch[0]);
 
     return NextResponse.json(persona);
-  } catch {
-    return NextResponse.json(
-      { error: "Failed to generate persona" },
-      { status: 500 }
-    );
+  } catch (err) {
+    const message = isQuotaError(err)
+      ? "Gemini quota exceeded. Wait a minute and try again, or set GEMINI_MODEL=gemini-1.5-flash for the free tier."
+      : "Failed to generate persona.";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

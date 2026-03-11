@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateText } from "ai";
-import { google } from "@ai-sdk/google";
 import { getSession } from "@/lib/supabase/server";
 import { createClient } from "@/lib/supabase/server";
+import { getGeminiModel, withGeminiRetry, isQuotaError } from "@/lib/gemini";
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
@@ -48,9 +48,10 @@ export async function POST(req: NextRequest) {
       )
       .join("\n\n");
 
-    const { text } = await generateText({
-      model: google(process.env.GEMINI_MODEL || "gemini-2.0-flash"),
-      prompt: `Analyze this interview transcript with ${personaRow?.name} (${personaRow?.role}${personaRow?.company ? ` at ${personaRow.company}` : ""}).
+    const { text } = await withGeminiRetry(() =>
+      generateText({
+        model: getGeminiModel(),
+        prompt: `Analyze this interview transcript with ${personaRow?.name} (${personaRow?.role}${personaRow?.company ? ` at ${personaRow.company}` : ""}).
 
 Extract the following in JSON format:
 {
@@ -63,7 +64,8 @@ Extract the following in JSON format:
 
 Transcript:
 ${transcript}`,
-    });
+      })
+    );
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
@@ -87,10 +89,10 @@ ${transcript}`,
       .eq("user_id", session.user.id);
 
     return NextResponse.json(insights);
-  } catch {
-    return NextResponse.json(
-      { error: "Failed to generate insights" },
-      { status: 500 }
-    );
+  } catch (err) {
+    const message = isQuotaError(err)
+      ? "Gemini quota exceeded. Wait a minute and try again, or set GEMINI_MODEL=gemini-1.5-flash for the free tier."
+      : "Failed to generate insights.";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
