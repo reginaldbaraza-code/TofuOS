@@ -1,15 +1,11 @@
-'use client';
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
 
-import Index from '@/views/Index';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import { ProjectProvider } from '@/contexts/ProjectContext';
-
-export default function Home() {
-  return (
-    <ProtectedRoute>
-      <ProjectProvider>
-        <Index />
-      </ProjectProvider>
-    </ProtectedRoute>
-  );
+export default async function Home() {
+  const session = await auth();
+  if (session) {
+    redirect("/dashboard");
+  } else {
+    redirect("/login");
+  }
 }

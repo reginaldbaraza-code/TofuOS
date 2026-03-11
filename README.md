@@ -1,193 +1,54 @@
-# tofuOS
+# PM Interviews — Synthetic Product Manager Research
 
-AI-powered product management workspace: manage sources (documents, app reviews), get AI-driven insights, and create Jira tickets—all tied to your account.
+Conduct realistic synthetic interviews with AI-powered Product Manager personas. Built to help teams discover PM pain points, workflows, and insights at scale.
 
----
+## Quick Start
 
-## What You Need to Do (Summary)
-
-| Who you are | What to do |
-|-------------|------------|
-| **Developer (local)** | Clone → install → copy `.env.example` to `.env.local` → add keys → run Supabase SQL → `npm run dev`. |
-| **Deploying to Vercel** | Connect repo to Vercel → add env vars in Vercel → add production URL in Supabase redirect URLs → deploy. |
-| **Project manager / stakeholder** | Use [docs/RESTRATEGY-AND-DEPLOYMENT.md](docs/RESTRATEGY-AND-DEPLOYMENT.md) for status, checklists, and deployment clarity. |
-
----
-
-## Prerequisites
-
-- **Node.js** 18.x or 20.x (`node -v`)
-- **npm** (comes with Node)
-- **Supabase** account ([supabase.com](https://supabase.com))
-- **Optional:** Google Gemini API key and/or OpenAI API key for AI features; Jira Cloud for ticket creation
-
----
-
-## Quick Start (Local)
-
-### 1. Clone and install
+### 1. Install dependencies
 
 ```bash
-git clone <your-repo-url>
-cd TofuOS
-npm install
+pnpm install
 ```
 
-### 2. Environment variables
+### 2. Configure environment
 
-- Copy the example env file:
-  ```bash
-  cp .env.example .env.local
-  ```
-- Edit `.env.local` and set:
-  - **Required:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (from Supabase → Project Settings → API).
-  - **Optional:** `GOOGLE_GEMINI_API_KEY`, `OPENAI_API_KEY` (for AI analysis/chat).
+Edit `.env` and add your OpenAI API key:
 
-Do **not** commit `.env.local` or any file containing real keys.
-
-### 3. Supabase setup (required for auth and data)
-
-1. In the [Supabase Dashboard](https://supabase.com/dashboard), open your project.
-2. Go to **SQL Editor** and run the following (creates tables and RLS).
-
-**Table: `sources`** (for documents and app review sources):
-
-```sql
-create table if not exists sources (
-  id uuid default gen_random_uuid() primary key,
-  created_at timestamptz default now() not null,
-  name text not null,
-  type text not null,
-  selected boolean default true,
-  meta jsonb,
-  user_id uuid references auth.users(id) on delete cascade not null
-);
-
-alter table sources enable row level security;
-drop policy if exists "Users can manage their own sources" on sources;
-create policy "Users can manage their own sources" on sources for all using (auth.uid() = user_id);
+```
+OPENAI_API_KEY=sk-your-actual-key-here
+NEXTAUTH_SECRET=change-me-to-a-random-secret
 ```
 
-**Table: `jira_configs`** (saves Jira credentials per user):
-
-```sql
-create table if not exists jira_configs (
-  id uuid default gen_random_uuid() primary key,
-  created_at timestamptz default now() not null,
-  domain text not null,
-  email text not null,
-  api_token text not null,
-  user_id uuid references auth.users(id) on delete cascade unique not null
-);
-
-alter table jira_configs enable row level security;
-drop policy if exists "Users can manage their own jira config" on jira_configs;
-create policy "Users can manage their own jira config" on jira_configs for all using (auth.uid() = user_id);
-```
-
-**Projects** (enables project switcher; sources, insights, and chat are stored per project):
-
-Run the migration in `supabase/migrations/20250226000000_add_projects.sql` in the SQL Editor, or run the SQL it contains. This creates `projects`, adds `project_id` to `sources`, and adds `project_insights` and `chat_messages` tables. If you have existing sources, uncomment and run the backfill at the bottom of that file once to assign them to a default project.
-
-### 4. Run the app
+### 3. Set up database
 
 ```bash
-npm run dev
+npx prisma generate
+npx prisma migrate dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Sign in with Supabase (e.g. Email or OAuth); add sources, run analysis, and create Jira tickets as needed.
+### 4. Run
 
----
+```bash
+pnpm dev
+```
 
-## Deploying to Vercel
+Open [http://localhost:3000](http://localhost:3000), create an account, and start interviewing.
 
-**Important:** Commit `package-lock.json` to the repo. Vercel is configured to run `npm ci`, which installs exactly from the lockfile so you get React 18 and Next.js 14 as intended.
+## Features
 
-For a full step-by-step list of Vercel options to change, see **[docs/VERCEL-SETUP.md](docs/VERCEL-SETUP.md)**.
-
-### Step 1: Connect the repo
-
-- In [Vercel](https://vercel.com), create a new project (or use an existing one).
-- Import your GitHub repository and select the branch you deploy from (e.g. `main`).
-
-### Step 2: Set environment variables
-
-In the Vercel project: **Settings → Environment Variables**. Add at least:
-
-| Variable | Where to get it |
-|----------|------------------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase → Project Settings → API |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Same as above |
-| `GOOGLE_GEMINI_API_KEY` | [Google AI Studio](https://aistudio.google.com/) (if using Gemini) |
-| `OPENAI_API_KEY` | [OpenAI API keys](https://platform.openai.com/api-keys) (if using OpenAI routes) |
-
-Add these for **Production** (and optionally Preview/Development). Never commit real keys to the repo.
-
-### Step 3: Allow redirect URLs in Supabase
-
-- Supabase Dashboard → **Authentication → URL Configuration**.
-- Under **Redirect URLs**, add:
-  - Your production URL (e.g. `https://your-app.vercel.app`)
-  - Optional: `https://*.vercel.app` for preview deployments.
-
-### Step 4: Deploy
-
-- Push to the connected branch; Vercel will build and deploy.
-- If the build fails, check the build log and see [Troubleshooting](#troubleshooting) below and [docs/RESTRATEGY-AND-DEPLOYMENT.md](docs/RESTRATEGY-AND-DEPLOYMENT.md).
-
----
-
-## Docs
-
-- **[Restrategy, functionality & Vercel deployment](docs/RESTRATEGY-AND-DEPLOYMENT.md)** — Step-by-step restrategy checklist, functionality verification, Vercel deployment guidelines, and troubleshooting for developers and deployment owners.
-
----
+- **21 pre-built PM personas** covering startup, enterprise, growth, platform, healthtech, gaming, automotive, cybersecurity, EdTech, fintech, GovTech, AgriTech, and many more archetypes
+- **AI persona generation** — describe the PM type you want and GPT-4o creates a complete persona
+- **Manual persona builder** — full control over every detail
+- **Streaming chat** — real-time, iMessage-style interview interface
+- **Suggested interview questions** — organized by category (discovery, pain points, tools, deeper exploration)
+- **AI-powered insights** — automatic extraction of pain points, themes, key quotes after each interview
+- **Export** — single or bulk export in Markdown, JSON, or CSV formats with ZIP packaging
 
 ## Tech Stack
 
-| Area | Technology |
-|------|------------|
-| Framework | Next.js 15 (App Router) |
-| UI | React 18, TypeScript, Tailwind CSS, shadcn/ui |
-| Auth & database | Supabase (Auth + Postgres) |
-| AI | Google Gemini and/or OpenAI (via API routes) |
-| Ticketing | Jira Cloud API |
-
----
-
-## Scripts
-
-| Command | Purpose |
-|---------|--------|
-| `npm run dev` | Start development server (default port 3000) |
-| `npm run build` | Production build |
-| `npm run start` | Run production build locally |
-| `npm run lint` | Run ESLint |
-| `npm run server` | Run standalone Express server in `server/` (optional; not used on Vercel) |
-
----
-
-## Troubleshooting
-
-- **Build fails with `Cannot find module './cjs/react.production.js'`**  
-  Use React 18 in `package.json` (e.g. `"react": "^18.3.1"`, `"react-dom": "^18.3.1"`). Do not use React 19 with this Next.js setup until compatibility is confirmed.
-
-- **Sign-in redirect fails**  
-  Add the exact app URL (and preview URL if needed) to Supabase → Authentication → URL Configuration → Redirect URLs.
-
-- **AI analysis or chat doesn’t work**  
-  Ensure the correct API key is set in `.env.local` (local) or in Vercel Environment Variables (deployed), and that the variable name matches what the API route expects. The app defaults to **gemini-2.5-flash**, which has free-tier quota; if you get a 404, set `GEMINI_MODEL` to a model from [Gemini API models](https://ai.google.dev/gemini-api/docs/models).
-- **“Rate limit” or “quota exceeded” (429)**  
-  The Gemini free tier has limited requests per minute and per day. Wait a few minutes and try again, or check [Gemini API rate limits](https://ai.google.dev/gemini-api/docs/rate-limits) and your [usage](https://ai.dev/rate-limit). For higher limits, enable billing in Google AI Studio.
-
-- **Jira ticket creation fails**  
-  Configure Jira in the app (domain, email, API token). For Jira Cloud, create an API token at [Atlassian API tokens](https://id.atlassian.com/manage-profile/security/api-tokens). The app stores config in Supabase per user.
-
-- **More detail (developers / deployment)**  
-  See **[docs/RESTRATEGY-AND-DEPLOYMENT.md](docs/RESTRATEGY-AND-DEPLOYMENT.md)** for checklists, restrategy steps, verification, and deployment guidelines.
-
----
-
-## License and Contributing
-
-Private repository. For contribution or deployment questions, refer to the docs above and your team’s workflow.
+- Next.js 16 (App Router)
+- TypeScript
+- Tailwind CSS
+- Prisma + SQLite (local) / Turso libSQL (production)
+- NextAuth.js (credentials)
+- Vercel AI SDK + OpenAI GPT-4o

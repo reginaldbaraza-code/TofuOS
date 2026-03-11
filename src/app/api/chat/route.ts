@@ -1,106 +1,90 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { generateWithFallback, QUOTA_EXCEEDED_MESSAGE } from "@/lib/ai";
-import type { ChatMessage } from "@/lib/ai";
+import { NextRequest } from "next/server";
+import { streamText } from "ai";
+import { openai } from "@ai-sdk/openai";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
-const MAX_CONTEXT_PER_SOURCE = 28000;
-const MAX_CONTEXT_TOTAL = 120000;
-
-function buildSourceContextWithContent(sources: { name: string; type: string; content?: string | null }[]): string {
-  let total = 0;
-  const parts: string[] = [];
-  for (const s of sources) {
-    const content = s.content?.trim();
-    const text = content
-      ? content.length > MAX_CONTEXT_PER_SOURCE
-        ? content.slice(0, MAX_CONTEXT_PER_SOURCE) + '\n\n[... truncated ...]'
-        : content
-      : '(No extracted text for this source.)';
-    const block = `--- Source: ${s.name} [${s.type}] ---\n${text}`;
-    if (total + block.length > MAX_CONTEXT_TOTAL) {
-      parts.push(block.slice(0, MAX_CONTEXT_TOTAL - total) + '\n\n[... more sources omitted ...]');
-      break;
-    }
-    parts.push(block);
-    total += block.length;
-  }
-  return parts.join('\n\n');
+interface UIMessageInput {
+  role: string;
+  content?: string;
+  parts?: Array<{ type: string; text?: string }>;
 }
 
-export async function POST(req: Request) {
-  try {
-    const { message, sourceIds, history, projectContext } = await req.json();
-
-    if (!message) {
-      return NextResponse.json({ message: 'Message is required' }, { status: 400 });
-    }
-
-    const hasOpenAI = !!process.env.OPENAI_API_KEY?.trim();
-    const hasGemini = !!process.env.GOOGLE_GEMINI_API_KEY?.trim();
-    const hasGroq = !!process.env.GROQ_API_KEY?.trim();
-    if (!hasOpenAI && !hasGemini && !hasGroq) {
-      return NextResponse.json(
-        { message: "Set OPENAI_API_KEY, GOOGLE_GEMINI_API_KEY, or GROQ_API_KEY in .env.local to enable chat." },
-        { status: 503 }
-      );
-    }
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    
-    let context = "No specific sources selected.";
-    if (projectContext && typeof projectContext === 'string' && projectContext.trim()) {
-      context = `Project context (use this to align answers): ${projectContext.trim()}\n\n`;
-    }
-
-    const authHeader = req.headers.get('Authorization');
-    const token = authHeader?.replace(/^Bearer\s+/i, '').trim();
-
-    if (sourceIds && sourceIds.length > 0 && supabaseUrl && supabaseAnonKey) {
-      const supabase = createClient(supabaseUrl, supabaseAnonKey, token
-        ? { global: { headers: { Authorization: `Bearer ${token}` } } }
-        : undefined
-      );
-      const { data: sources } = await supabase
-        .from('sources')
-        .select('name, type, content')
-        .in('id', sourceIds);
-      
-      if (sources && sources.length > 0) {
-        const sourceContent = buildSourceContextWithContent(sources);
-        context = (projectContext && typeof projectContext === 'string' && projectContext.trim())
-          ? `Project context (use this to align answers): ${projectContext.trim()}\n\n`
-          : '';
-        context += `The user has selected the following sources. Use the actual content below to answer accurately. If content is missing for a source, say so and use general PM knowledge only for that part.\n\n${sourceContent}`;
-        const allMissing = sources.every((s) => !s.content?.trim());
-        if (allMissing) {
-          context += '\n\nNote: No text was extracted from any of these sources (e.g. PDFs may have been added before extraction was enabled, or extraction failed). Suggest the user remove these sources and re-add the PDFs via Add Sources so the app can extract their content, or paste relevant excerpts.';
-        }
-      }
-    }
-
-    const fullPrompt = `Context:\n${context}\n\nUser Question: ${message}`;
-    const chatHistory = (history || []).map((h: { role: string; content: string }) => ({
-      role: (h.role === "assistant" ? "assistant" : "user") as "user" | "assistant",
-      content: h.content,
-    }));
-    const messages: ChatMessage[] = [
-      ...chatHistory,
-      { role: "user", content: fullPrompt },
-    ];
-    const content = await generateWithFallback(messages);
-    return NextResponse.json({ content });
-  } catch (error: unknown) {
-    const errMessage = error instanceof Error ? error.message : String(error);
-    const isQuota =
-      errMessage.includes("429") ||
-      errMessage.includes("quota") ||
-      errMessage.includes("Too Many Requests") ||
-      errMessage.includes("Quota exceeded");
-    console.error("Chat AI Error:", error);
-    if (isQuota) {
-      return NextResponse.json({ message: QUOTA_EXCEEDED_MESSAGE }, { status: 429 });
-    }
-    return NextResponse.json({ message: errMessage }, { status: 500 });
+function extractText(msg: UIMessageInput): string {
+  if (msg.parts) {
+    return msg.parts
+      .filter((p): p is { type: string; text: string } => p.type === "text" && typeof p.text === "string")
+      .map((p) => p.text)
+      .join("");
   }
+  return msg.content || "";
+}
+
+function toStandardMessages(msgs: UIMessageInput[]): Array<{ role: "user" | "assistant"; content: string }> {
+  return msgs
+    .filter((m) => m.role === "user" || m.role === "assistant")
+    .map((m) => ({
+      role: m.role as "user" | "assistant",
+      content: extractText(m),
+    }))
+    .filter((m) => m.content.length > 0);
+}
+
+export async function POST(req: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  const body = await req.json();
+  const rawMessages: UIMessageInput[] = body.messages || [];
+  const interviewId = body.interviewId;
+
+  const interview = await prisma.interview.findFirst({
+    where: { id: interviewId, userId: session.user.id },
+    include: { persona: true },
+  });
+
+  if (!interview) {
+    return new Response("Interview not found", { status: 404 });
+  }
+
+  const lastUserMessage = rawMessages[rawMessages.length - 1];
+  if (lastUserMessage?.role === "user") {
+    const textContent = extractText(lastUserMessage);
+    if (textContent) {
+      await prisma.message.create({
+        data: {
+          interviewId,
+          role: "user",
+          content: textContent,
+        },
+      });
+    }
+  }
+
+  const standardMessages = toStandardMessages(rawMessages);
+
+  const result = streamText({
+    model: openai("gpt-4o"),
+    system: interview.persona.systemPrompt,
+    messages: standardMessages,
+    onFinish: async ({ text }) => {
+      if (text) {
+        await prisma.message.create({
+          data: {
+            interviewId,
+            role: "assistant",
+            content: text,
+          },
+        });
+      }
+      await prisma.interview.update({
+        where: { id: interviewId },
+        data: { updatedAt: new Date() },
+      });
+    },
+  });
+
+  return result.toUIMessageStreamResponse();
 }
