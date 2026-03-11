@@ -40,8 +40,8 @@ export default function DashboardPage() {
       fetch("/api/personas").then((r) => r.json()),
       fetch("/api/interviews").then((r) => r.json()),
     ]).then(([p, i]) => {
-      setPersonas(p);
-      setInterviews(i);
+      setPersonas(Array.isArray(p) ? p : []);
+      setInterviews(Array.isArray(i) ? i : []);
       setLoading(false);
     });
   }, []);
