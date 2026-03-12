@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card, Button, Input, Textarea } from "@/components/ui";
 import { PERSONA_TEMPLATES } from "@/lib/persona-templates";
+import { extractPdfText } from "@/lib/extract-pdf-text";
 import {
   Sparkles,
   FileText,
@@ -31,6 +32,14 @@ export default function NewPersonaPage() {
   const [step, setStep] = useState<Step>("sources");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isResumeUploading, setIsResumeUploading] = useState(false);
+  const [resumePhase, setResumePhase] = useState<
+    "idle" | "reading" | "llm" | "saving"
+  >("idle");
+  const [resumeStep, setResumeStep] = useState(0);
+  const resumeInputRef = useRef<HTMLInputElement | null>(null);
+  const [isDeepSearching, setIsDeepSearching] = useState(false);
+  const [deepSearchStep, setDeepSearchStep] = useState(0);
 
   const [quickPrompt, setQuickPrompt] = useState("");
   const [form, setForm] = useState({
@@ -143,6 +152,41 @@ export default function NewPersonaPage() {
     }
   };
 
+  const handleDeepSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const query = genParams.additionalContext.trim();
+    if (!query) {
+      setError("Please provide some context for deep search.");
+      return;
+    }
+    setIsDeepSearching(true);
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/deep-research", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => null);
+        throw new Error(err?.error || "Deep research failed");
+      }
+      const persona = await res.json();
+      await savePersona(persona);
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : "Deep research failed. Please try again."
+      );
+      setLoading(false);
+    }
+    finally {
+      setIsDeepSearching(false);
+    }
+  };
+
   const handleTemplate = async (index: number) => {
     await savePersona({ ...PERSONA_TEMPLATES[index] });
   };
@@ -152,8 +196,135 @@ export default function NewPersonaPage() {
     borderColor: "var(--card-border)",
   };
 
+  useEffect(() => {
+    if (!isResumeUploading || resumePhase === "idle") return;
+    setResumeStep(0);
+    const id = setInterval(() => {
+      setResumeStep((prev) => prev + 1);
+    }, 4000);
+    return () => clearInterval(id);
+  }, [isResumeUploading, resumePhase]);
+
+  const getResumeStatus = () => {
+    if (!isResumeUploading || resumePhase === "idle") return "";
+    const sequences: Record<string, string[]> = {
+      reading: [
+        "Reading PDF…",
+        "Extracting text layers…",
+        "Parsing sections & bullet points…",
+      ],
+      llm: [
+        "Asking Gemini…",
+        "Letting Gemini think…",
+        "Aligning resume details with persona format…",
+      ],
+      saving: ["Saving persona…", "Finishing up persona details…"],
+    };
+    const messages = sequences[resumePhase] ?? [];
+    if (!messages.length) return "";
+    return messages[resumeStep % messages.length];
+  };
+
+  const resumeStatus = getResumeStatus();
+
+  useEffect(() => {
+    if (!isDeepSearching) return;
+    setDeepSearchStep(0);
+    const id = setInterval(() => {
+      setDeepSearchStep((prev) => prev + 1);
+    }, 4000);
+    return () => clearInterval(id);
+  }, [isDeepSearching]);
+
+  const getDeepSearchStatus = () => {
+    if (!isDeepSearching) return "";
+    const messages = [
+      "Scanning academic papers…",
+      "Reading Reddit discussions…",
+      "Analyzing job postings…",
+      "Reviewing industry reports…",
+      "Exploring startup databases…",
+      "Checking GitHub repositories…",
+      "Analyzing product reviews…",
+      "Reading expert blog posts…",
+      "Studying competitor websites…",
+      "Reviewing conference talks…",
+      "Analyzing LinkedIn discussions…",
+      "Reading technical documentation…",
+      "Scanning online communities…",
+      "Checking hiring trends…",
+      "Reviewing market research reports…",
+      "Analyzing product launch announcements…",
+      "Reading founder interviews…",
+      "Exploring open-source projects…",
+      "Reviewing academic citations…",
+      "Identifying emerging trends…",
+    ];
+    return messages[deepSearchStep % messages.length];
+  };
+
+  const deepSearchStatus = getDeepSearchStatus();
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
+      <input
+        ref={resumeInputRef}
+        type="file"
+        accept="application/pdf"
+        className="hidden"
+        onChange={async (event) => {
+          const file = event.target.files?.[0];
+          if (!file) return;
+          setError("");
+          setIsResumeUploading(true);
+          setResumePhase("reading");
+          setLoading(true);
+          try {
+            const arrayBuffer = await file.arrayBuffer();
+            const resumeText = await extractPdfText(arrayBuffer);
+            if (!resumeText) {
+              setError("Could not read text from PDF");
+              setResumePhase("idle");
+              setIsResumeUploading(false);
+              setLoading(false);
+              if (event.target) event.target.value = "";
+              return;
+            }
+            setResumePhase("llm");
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 90_000);
+            const res = await fetch("/api/personas/import-from-resume", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ resumeText }),
+              signal: controller.signal,
+            });
+            clearTimeout(timeoutId);
+            if (!res.ok) {
+              const err = await res.json().catch(() => null);
+              throw new Error(err?.error || "Failed to import resume");
+            }
+            const persona = await res.json();
+            setResumePhase("saving");
+            await savePersona(persona);
+          } catch (e) {
+            const message =
+              e instanceof Error && e.name === "AbortError"
+                ? "Request took too long"
+                : e instanceof Error
+                  ? e.message
+                  : "Failed to import resume. Check that GOOGLE_GENERATIVE_AI_API_KEY is set.";
+            setError(message);
+            setLoading(false);
+          } finally {
+            setIsResumeUploading(false);
+            setResumePhase("idle");
+            if (event.target) {
+              event.target.value = "";
+            }
+          }
+        }}
+      />
       {/* Back */}
       <Link
         href="/personas"
@@ -213,6 +384,17 @@ export default function NewPersonaPage() {
                 </button>
               ))}
             </div>
+
+            {isResumeUploading && (
+              <div className="mt-4 space-y-2">
+                <div className="text-xs font-medium text-[var(--muted)]">
+                  {resumeStatus || "Processing resume…"}
+                </div>
+                <div className="relative h-1 w-full overflow-hidden rounded-full bg-[var(--muted-bg)]">
+                  <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-[var(--accent)]/0 via-[var(--accent)]/70 to-[var(--accent)]/0" />
+                </div>
+              </div>
+            )}
           </Card>
 
           {/* Source cards */}
@@ -245,13 +427,21 @@ export default function NewPersonaPage() {
               icon={<Briefcase className="h-5 w-5" />}
               title="Resume"
               description="Upload a resume to create a persona."
-              comingSoon
+              onClick={() => {
+                resumeInputRef.current?.click();
+              }}
             />
             <SourceCard
               icon={<Globe className="h-5 w-5" />}
               title="Company URL"
               description="Scrape company context for the persona."
               comingSoon
+            />
+            <SourceCard
+              icon={<Sparkles className="h-5 w-5" />}
+              title="Deep search"
+              description="Run a deeper search on the resume."
+              onClick={() => setStep("generate")}
             />
           </div>
         </>
@@ -411,56 +601,17 @@ export default function NewPersonaPage() {
           )}
 
           {step === "generate" && (
-            <form onSubmit={handleGenerate} className="space-y-5">
+            <form onSubmit={handleDeepSearch} className="space-y-5">
+              <h2 className="text-lg font-semibold text-[var(--foreground)]">
+                Run deep search
+              </h2>
               <div className="rounded-[var(--radius-lg)] bg-[var(--accent-muted)] p-4 text-sm text-[var(--accent)]">
-                Describe the type of PM. AI will generate a complete persona with
-                backstory, pain points, and personality.
+                Paste or describe everything that matters about this PM: role,
+                company, product, seniority, industry, challenges, and any other
+                context. Deep search will turn this into a full persona.
               </div>
-              <Input
-                label="Role"
-                value={genParams.role}
-                onChange={(e) =>
-                  setGenParams((p) => ({ ...p, role: e.target.value }))
-                }
-                placeholder="e.g. Senior PM, VP of Product"
-              />
-              <Input
-                label="Company"
-                value={genParams.company}
-                onChange={(e) =>
-                  setGenParams((p) => ({ ...p, company: e.target.value }))
-                }
-                placeholder="e.g. Mercedes, or leave blank"
-              />
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Input
-                  label="Company size"
-                  value={genParams.companySize}
-                  onChange={(e) =>
-                    setGenParams((p) => ({ ...p, companySize: e.target.value }))
-                  }
-                  placeholder="e.g. 50 people, Fortune 500"
-                />
-                <Input
-                  label="Industry"
-                  value={genParams.industry}
-                  onChange={(e) =>
-                    setGenParams((p) => ({ ...p, industry: e.target.value }))
-                  }
-                  placeholder="e.g. HealthTech, FinTech"
-                />
-              </div>
-              <Input
-                label="Years of experience"
-                type="number"
-                value={genParams.experienceYears}
-                onChange={(e) =>
-                  setGenParams((p) => ({ ...p, experienceYears: e.target.value }))
-                }
-                placeholder="e.g. 5"
-              />
               <Textarea
-                label="Additional context"
+                label="Deep search context"
                 value={genParams.additionalContext}
                 onChange={(e) =>
                   setGenParams((p) => ({
@@ -468,11 +619,21 @@ export default function NewPersonaPage() {
                     additionalContext: e.target.value,
                   }))
                 }
-                placeholder="Any extra details..."
-                rows={3}
+                placeholder="Example: Senior PM at a German automotive OEM working on in-car software platforms, 8 years experience, leads a cross‑functional team, struggles with aligning hardware and software roadmaps..."
+                rows={6}
               />
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Generating..." : "Generate with AI"}
+              {isDeepSearching && (
+                <div className="space-y-2">
+                  <div className="text-xs font-medium text-[var(--muted)]">
+                    {deepSearchStatus}
+                  </div>
+                  <div className="relative h-1 w-full overflow-hidden rounded-full bg-[var(--muted-bg)]">
+                    <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-[var(--accent)]/0 via-[var(--accent)]/70 to-[var(--accent)]/0" />
+                  </div>
+                </div>
+              )}
+              <Button type="submit" className="w-full" disabled={loading || isDeepSearching}>
+                {loading || isDeepSearching ? "Running…" : "Run deep search"}
               </Button>
             </form>
           )}
