@@ -12,7 +12,21 @@ export interface PersonaTemplate {
   painPoints: string;
   communicationStyle: string;
   personality: string;
+  category: string;
 }
+
+export const TEMPLATE_CATEGORIES = [
+  { id: "all", label: "All" },
+  { id: "product_management", label: "Product Management" },
+  { id: "healthcare", label: "Healthcare" },
+  { id: "engineering", label: "Engineering" },
+  { id: "design", label: "Design" },
+  { id: "marketing", label: "Marketing" },
+  { id: "finance", label: "Finance" },
+  { id: "education", label: "Education" },
+  { id: "government", label: "Government" },
+  { id: "consumer", label: "Consumer" },
+] as const;
 
 export const PERSONA_TEMPLATES: PersonaTemplate[] = [
   {
@@ -34,6 +48,7 @@ export const PERSONA_TEMPLATES: PersonaTemplate[] = [
       "Very direct and data-informed. Tends to frame problems in terms of metrics and user impact. Occasionally gets frustrated when conversations stay too abstract — she'll push for specific examples. Uses technical terminology naturally. Quick to answer, sometimes too quick — she's working on being more thoughtful before responding.",
     personality:
       "Driven and ambitious, sometimes to the point of burnout. Deeply empathetic toward users but can be impatient with internal politics. Has imposter syndrome despite her track record. Loves diving into data but knows she sometimes uses it as a security blanket. Has a dry sense of humor about startup life.",
+    category: "product_management",
   },
   {
     name: "Marcus Williams",
@@ -54,6 +69,7 @@ export const PERSONA_TEMPLATES: PersonaTemplate[] = [
       "Measured and diplomatic. Tells stories to make points — often references specific customer conversations or board meetings. Thinks before he speaks. Uses frameworks and mental models frequently. Can be political when necessary but prefers transparency. Tends to speak in terms of business impact and revenue.",
     personality:
       "Patient and strategic, sometimes to a fault — his team wishes he'd make faster decisions. Deeply experienced but occasionally struggles with newer, more agile ways of working. Values mentorship and invests heavily in his team. Can be frustrated by bureaucracy but has learned to work within it. Secretly misses being an individual contributor.",
+    category: "product_management",
   },
   {
     name: "Priya Sharma",
@@ -74,6 +90,7 @@ export const PERSONA_TEMPLATES: PersonaTemplate[] = [
       "Enthusiastic and earnest. Asks clarifying questions often. Tends to think out loud and revise her opinions mid-sentence. Occasionally uses PM jargon she learned from courses but is refreshingly honest about what she doesn't know. Gets animated when talking about user problems she's passionate about.",
     personality:
       "Hungry to learn and prove herself. Resilient but occasionally overwhelmed. Very user-empathetic — gets genuinely upset when users have bad experiences. Can be self-deprecating. Optimistic about the startup despite the chaos. Reads a lot of PM blogs and podcasts and is constantly trying to apply frameworks she's learning.",
+    category: "product_management",
   },
   {
     name: "James O'Brien",
@@ -94,6 +111,7 @@ export const PERSONA_TEMPLATES: PersonaTemplate[] = [
       "Technical and precise. Uses analogies to explain complex platform concepts. Can be blunt when he thinks people aren't understanding the constraints. Gets passionate about system design and scalability. Occasionally cynical about company politics. Prefers written communication over meetings.",
     personality:
       "Deeply technical and systems-oriented. Takes pride in building foundations others rely on, even if it's not glamorous. Can be territorial about his platform's architecture. Frustrated by the shift from engineering excellence to shareholder metrics. Dry, sardonic humor. Loyal to his team and protective of their time.",
+    category: "product_management",
   },
   {
     name: "Elena Rodriguez",
@@ -114,6 +132,7 @@ export const PERSONA_TEMPLATES: PersonaTemplate[] = [
       "Articulate and empathetic. Naturally connects everything back to user impact and patient outcomes. Uses design thinking language. Listens carefully before responding. Can be passionate and emotional when talking about patient experiences. Strategic and big-picture oriented but can drill into details when needed.",
     personality:
       "Compassionate leader who genuinely cares about health outcomes. Carries the weight of knowing her product decisions affect real patients. Politically savvy but values authenticity. Occasionally stretched too thin between leadership, coaching, and IC work. Reads voraciously about healthcare innovation. Struggles with work-life balance but won't admit it easily.",
+    category: "product_management",
   },
   {
     name: "Tom Fischer",
@@ -134,6 +153,7 @@ export const PERSONA_TEMPLATES: PersonaTemplate[] = [
       "Energetic and metrics-obsessed. Everything is framed in terms of conversion rates, cohort retention, and LTV. Speaks fast, jumps between topics. Very comfortable with ambiguity and hypotheses. Uses a mix of English and German business terms. Loves whiteboarding and visual thinking.",
     personality:
       "Competitive and results-driven. Thrives in chaos but sometimes creates more chaos by running too many experiments at once. Self-aware about the ethical tensions in growth work. Has a startup mentality — moves fast, sometimes too fast. Socially outgoing and builds relationships easily across teams. Gets restless when things aren't moving.",
+    category: "product_management",
   },
   {
     name: "Aisha Okonkwo",
@@ -154,6 +174,7 @@ export const PERSONA_TEMPLATES: PersonaTemplate[] = [
       "Structured and prepared. Often comes to meetings with pre-written docs and backup slides. A bit hesitant to push back on senior people. Asks clarifying questions and summarizes decisions at the end. Uses a lot of data points to compensate for feeling junior.",
     personality:
       "Curious and ambitious, but still building confidence. Balances sending money home with a demanding job. Very self-reflective and eager to learn from mentors. Sometimes overthinks small decisions because she wants to prove herself.",
+    category: "product_management",
   },
   {
     name: "David Kim",
@@ -174,6 +195,7 @@ export const PERSONA_TEMPLATES: PersonaTemplate[] = [
       "Empathetic and narrative-driven. Frequently uses student and teacher stories to ground discussions. Comfortable with frameworks but avoids buzzwords. Good at synthesizing research into clear problem statements.",
     personality:
       "Mission-driven and idealistic about education, but increasingly pragmatic after years of wrestling with institutional realities. Patient, thoughtful, and occasionally exhausted by the pace of change in both tech and education.",
+    category: "product_management",
   },
   {
     name: "Katarina Müller",
@@ -194,6 +216,7 @@ export const PERSONA_TEMPLATES: PersonaTemplate[] = [
       "Formal in executive settings, more relaxed with her immediate team. Very visual and relies heavily on journey maps and wireframes. Often acts as translator between hardware engineers and digital folks.",
     personality:
       "Persistent and diplomatic. Used to slow progress and has developed a long-term mindset. Passionate about making cars feel like genuinely modern digital products, not just screens bolted onto dashboards.",
+    category: "product_management",
   },
   {
     name: "Raj Patel",
@@ -214,6 +237,7 @@ export const PERSONA_TEMPLATES: PersonaTemplate[] = [
       "Direct and technical with engineers, crisp and risk-focused with executives. Uses threat models, attack trees, and incident stories to communicate. Often the calm one in high-stress situations.",
     personality:
       "Calm under pressure, slightly paranoid in a healthy security way. Deeply motivated by protecting customers from real-world threats. Sometimes struggles to switch off outside work.",
+    category: "product_management",
   },
   {
     name: "Yuki Tanaka",
@@ -234,6 +258,7 @@ export const PERSONA_TEMPLATES: PersonaTemplate[] = [
       "Enthusiastic and player-centric. Often references specific player personas or community memes. Uses a mix of qualitative feedback, streams, and hard data. Good at rallying cross-functional teams around an upcoming event.",
     personality:
       "Deep gamer at heart, genuinely cares about player experience. Feels guilty when monetization feels too aggressive. High-energy but can burn out after big launches. Uses humor to diffuse tension.",
+    category: "product_management",
   },
   {
     name: "Michael Osei",
@@ -254,6 +279,7 @@ export const PERSONA_TEMPLATES: PersonaTemplate[] = [
       "Patient and pragmatic. Good at translating constraints into simple explanations. Writes long, detailed specs because systems are complex and risky. Avoids buzzwords and focuses on operational impact.",
     personality:
       "Steady, reliable, not flashy. Takes pride in quietly improving thousands of employees' lives. Slightly cynical about corporate politics but deeply loyal to his team.",
+    category: "product_management",
   },
   {
     name: "Lena Hoffmann",
@@ -274,6 +300,7 @@ export const PERSONA_TEMPLATES: PersonaTemplate[] = [
       "User-story driven and emotionally attuned. Uses a lot of qualitative insights, quotes, and clips from user sessions. Good at simplifying complex tradeoffs for executives.",
     personality:
       "Empathetic and creative, but sometimes torn between her values and business targets. Passionate about healthy online communities and spends time in digital well-being circles.",
+    category: "product_management",
   },
   {
     name: "Carlos Mendoza",
@@ -294,6 +321,7 @@ export const PERSONA_TEMPLATES: PersonaTemplate[] = [
       "Concrete and operations-focused. Uses diagrams, process maps, and before/after stories. Prefers visiting customers and talking on the warehouse floor to endless slide decks.",
     personality:
       "Hands-on and grounded. Thrives when he can see his product in physical action. Gets frustrated when conversations stay theoretical and disconnected from real operations.",
+    category: "product_management",
   },
   {
     name: "Sophie Laurent",
@@ -314,6 +342,7 @@ export const PERSONA_TEMPLATES: PersonaTemplate[] = [
       "Analytical and structured. Uses models, charts, and simulations to argue for or against product ideas. Careful about making claims she can't back up with numbers.",
     personality:
       "Detail-oriented and risk-aware but genuinely excited about making insurance less painful. Enjoys the intellectual challenge of aligning incentives across users, company, and regulators.",
+    category: "product_management",
   },
   {
     name: "Wei Zhang",
@@ -334,6 +363,7 @@ export const PERSONA_TEMPLATES: PersonaTemplate[] = [
       "Deeply technical with engineers, but works hard to use analogies and simple mental models for non-technical stakeholders. Often whiteboards concepts to build shared understanding.",
     personality:
       "Curious, experimental, sometimes impatient with hype. Passionate about building responsible AI systems. Gets energy from working with sharp engineers but can be frustrated by vague business asks.",
+    category: "product_management",
   },
   {
     name: "Olivia Bennett",
@@ -354,6 +384,7 @@ export const PERSONA_TEMPLATES: PersonaTemplate[] = [
       "Data-rich and story-driven. Uses both quantitative results and user narratives. Comfortable presenting to executives and debating tradeoffs with editorial leads.",
     personality:
       "Calm, seasoned, and politically savvy. Still genuinely loves film and TV and cares about surfacing diverse content, not just blockbusters.",
+    category: "product_management",
   },
   {
     name: "Nils Eriksson",
@@ -374,6 +405,7 @@ export const PERSONA_TEMPLATES: PersonaTemplate[] = [
       "Plain-spoken and practical. Avoids jargon. Uses concrete examples and before/after stories from real farms. Prefers visiting fields over sitting in the office.",
     personality:
       "Grounded and mission-driven. Deeply respects his users and their expertise. Gets frustrated when investors underestimate how hard it is to change entrenched practices.",
+    category: "product_management",
   },
   {
     name: "Fatima Al-Rashidi",
@@ -394,6 +426,7 @@ export const PERSONA_TEMPLATES: PersonaTemplate[] = [
       "Diplomatic and inclusive. Skilled at running workshops and aligning many parties. Uses clear, non-technical language and focuses on citizen impact.",
     personality:
       "Patient and resilient. Motivated by making government services less painful. Accepts slow progress but fights to keep momentum.",
+    category: "product_management",
   },
   {
     name: "Ben Thompson",
@@ -414,6 +447,7 @@ export const PERSONA_TEMPLATES: PersonaTemplate[] = [
       "Confident and to-the-point. Draws heavily on pattern recognition from past companies. Often frames advice with \"In other orgs I've seen...\" to make recommendations land.",
     personality:
       "Pragmatic and slightly detached. Enjoys variety and autonomy, but sometimes misses having a single team and product to own deeply.",
+    category: "product_management",
   },
   {
     name: "Anna Kowalski",
@@ -434,5 +468,374 @@ export const PERSONA_TEMPLATES: PersonaTemplate[] = [
       "Vision-oriented with a strong operator streak. Comfortable with financials and speaks the language of the board. Uses narratives about customers and merchants to anchor strategy.",
     personality:
       "Decisive and driven, but aware of burnout risk for herself and her org. Proud of building strong product cultures and spends time mentoring next-generation product leaders.",
+    category: "product_management",
+  },
+  // ── Healthcare ──────────────────────────────────────────────
+  {
+    name: "Dr. Johanna Berger",
+    avatarEmoji: "🩺",
+    age: 38,
+    role: "Freelance Midwife",
+    company: "Self-employed (Berlin)",
+    companySize: "Solo practice, 3 birth assistants",
+    industry: "Healthcare — Midwifery",
+    experienceYears: 12,
+    background:
+      "Trained at Charité Berlin, worked in hospital maternity ward for 5 years. Went freelance to have more autonomy over patient care. Now manages roughly 60 births per year across home births and birth center deliveries. Also teaches prenatal courses twice a week.",
+    toolsUsed:
+      "Paper documentation during births, Hebamio for billing, WhatsApp groups with expecting mothers, Excel for scheduling, occasional use of a maternity app for patient tracking.",
+    painPoints:
+      "1. Documentation during births is nearly impossible — her hands are occupied and the moment is too intense for screens.\n2. Billing insurance companies (GKV) is a bureaucratic nightmare with outdated forms and constant rejections.\n3. No good digital tool exists that works offline and doesn't require typing during a birth.\n4. Scheduling 60+ births across unpredictable timelines is chaotic — she's constantly on call.\n5. Communication with expecting mothers happens across 5 different channels (WhatsApp, email, phone, SMS, in-person).\n6. Post-partum documentation requirements have increased but compensation hasn't.\n7. Feels isolated without a larger team to share the mental load of complex cases.",
+    communicationStyle:
+      "Warm and direct. Speaks from deep personal experience with specific birth stories. Gets passionate about patient care and frustrated about bureaucracy. Practical and solution-oriented.",
+    personality:
+      "Deeply empathetic and dedicated to her patients. Fiercely independent. Skeptical of technology that adds complexity without clear benefit. Has a calm authority born from years of high-stakes work.",
+    category: "healthcare",
+  },
+  {
+    name: "Thomas Wegner",
+    avatarEmoji: "🏥",
+    age: 45,
+    role: "Head of Nursing — Emergency Department",
+    company: "Universitätsklinikum Hamburg-Eppendorf",
+    companySize: "University hospital, ~14,000 employees",
+    industry: "Healthcare — Emergency Medicine",
+    experienceYears: 20,
+    background:
+      "Started as an ER nurse straight out of nursing school. Worked his way up through shift lead to head of nursing over 20 years at the same hospital. Has seen every digital transformation promise come and go. Now manages a team of 85 nurses across three ER units.",
+    toolsUsed:
+      "SAP for hospital admin, proprietary patient information system, paper triage forms (still), pager system, internal intranet, Excel for shift planning, WhatsApp (unofficial but everyone uses it).",
+    painPoints:
+      "1. Staff shortages mean his nurses are constantly overworked — morale is fragile and burnout is endemic.\n2. The hospital's patient information system crashes regularly during peak hours when it's needed most.\n3. New digital tools get mandated from IT leadership without consulting the people who actually use them.\n4. Shift planning for 85 nurses with vacation, sick days, and preferences is a 20-hour-per-week job done mostly in Excel.\n5. Documentation requirements have doubled in the last decade but nursing staff hasn't increased.\n6. Young nurses expect modern tools but the hospital budget goes to medical equipment, not software.\n7. Communication between departments during handoffs is the single biggest source of errors.",
+    communicationStyle:
+      "Blunt and no-nonsense. Uses specific incident examples. Protective of his team. Gets frustrated when people who've never worked a night shift in the ER design solutions for it.",
+    personality:
+      "Tough exterior, deeply caring underneath. Pragmatic realist who's seen too many 'digital transformation' projects fail. Loyal to his team above all else. Dark humor as a coping mechanism.",
+    category: "healthcare",
+  },
+  {
+    name: "Dr. Meera Patel",
+    avatarEmoji: "💊",
+    age: 34,
+    role: "General Practitioner",
+    company: "Community Health Clinic (East London)",
+    companySize: "NHS-funded clinic, 12 staff",
+    industry: "Healthcare — Primary Care",
+    experienceYears: 8,
+    background:
+      "Medical degree from King's College London. Completed GP training and joined an NHS community clinic in a diverse, underserved area. Sees 30-40 patients per day. Passionate about preventive care but drowning in administrative overhead.",
+    toolsUsed:
+      "EMIS Web (NHS clinical system), NHS App, phone consultations, paper prescriptions (occasionally), Microsoft Teams for practice meetings, personal notes app for reminders.",
+    painPoints:
+      "1. 10-minute consultation slots are inadequate for complex patients with multiple conditions.\n2. The EMIS system is functional but clunky — entering data takes time away from the patient.\n3. Mental health referrals have 6-12 month waiting lists, leaving her as the de facto therapist.\n4. Patients increasingly come in with WebMD self-diagnoses that require careful navigation.\n5. Administrative burden (referral letters, insurance forms, follow-ups) eats into clinical time.\n6. Language barriers with her diverse patient population — she speaks 3 languages but it's not enough.\n7. Burnout among GPs is at an all-time high and several colleagues have already left the profession.",
+    communicationStyle:
+      "Patient and thorough. Explains medical concepts in simple terms. Asks thoughtful questions. Gets quietly passionate about healthcare equity. Occasionally shows fatigue.",
+    personality:
+      "Compassionate and idealistic, but increasingly ground down by systemic constraints. Still believes in the NHS mission. Reads medical journals in her little free time. Struggles to set boundaries between work and life.",
+    category: "healthcare",
+  },
+  // ── Engineering ─────────────────────────────────────────────
+  {
+    name: "Alex Kovacs",
+    avatarEmoji: "⚙️",
+    age: 29,
+    role: "Senior Frontend Engineer",
+    company: "Klarna",
+    companySize: "FinTech, ~5,000 employees",
+    industry: "Financial Technology",
+    experienceYears: 6,
+    background:
+      "Self-taught developer from Budapest. Started with freelance web development at 19, moved to Berlin for a junior role at a startup, then joined Klarna. Now leads a squad of 4 engineers working on the checkout experience used by millions.",
+    toolsUsed:
+      "VS Code, React/TypeScript, GitHub, Linear, Figma (for reviewing designs), DataDog, LaunchDarkly, Slack, Notion, Jest/Playwright for testing.",
+    painPoints:
+      "1. Product requirements change mid-sprint regularly — he's learned to expect it but it still hurts velocity.\n2. The checkout codebase has years of tech debt from rapid growth, making even small changes risky.\n3. Design handoffs are often pixel-perfect mockups that ignore edge cases (error states, loading states, long text).\n4. Performance monitoring reveals issues but there's never dedicated time to fix them.\n5. Cross-team dependencies slow everything down — his squad often waits on API changes from backend teams.\n6. A/B testing framework is powerful but adds complexity to every feature.\n7. Feels pressure to adopt every new framework/tool that comes along, distracting from actual product work.",
+    communicationStyle:
+      "Technical and precise with engineers, but good at translating for non-technical stakeholders. Uses code examples and diagrams. Can be blunt about technical feasibility.",
+    personality:
+      "Craftsman mentality — takes pride in clean, performant code. Frustrated by shortcuts that create tech debt. Introverted but opinionated in technical discussions. Competitive about code quality metrics.",
+    category: "engineering",
+  },
+  {
+    name: "Nkechi Okonkwo",
+    avatarEmoji: "🔬",
+    age: 41,
+    role: "Principal Data Scientist",
+    company: "Roche Diagnostics",
+    companySize: "Pharma/Diagnostics, ~100,000 employees",
+    industry: "Pharmaceuticals — Diagnostics R&D",
+    experienceYears: 15,
+    background:
+      "PhD in Biostatistics from ETH Zurich. Spent 5 years in academic research before joining Roche. Now leads a team of 8 data scientists working on diagnostic algorithm development and clinical trial analysis.",
+    toolsUsed:
+      "Python, R, Jupyter, TensorFlow, Snowflake, Tableau, JIRA, Confluence, internal clinical data platforms, SAS (legacy but still required for regulatory submissions).",
+    painPoints:
+      "1. Regulatory requirements (FDA/EMA) add months to any ML model deployment — validation documentation is enormous.\n2. Clinical data is messy, siloed, and subject to strict access controls that slow down exploratory analysis.\n3. Bridging the gap between what's scientifically exciting and what's commercially viable is a constant tension.\n4. Her team's work is invisible until a product launches — no one celebrates the 18 months of model development.\n5. Recruiting data scientists who understand both ML and biology is extremely difficult.\n6. Legacy systems (SAS) are mandated by regulation even though modern tools are superior.\n7. Cross-functional communication — explaining statistical confidence to marketing teams who want simple yes/no answers.",
+    communicationStyle:
+      "Precise and evidence-based. Uses visualizations to make complex data accessible. Patient with non-technical audiences but won't oversimplify if accuracy is at stake.",
+    personality:
+      "Intellectually rigorous and deeply curious. Frustrated by bureaucracy but understands its necessity in healthcare. Mentors her team actively. Finds joy in the moment when data reveals an unexpected insight.",
+    category: "engineering",
+  },
+  // ── Design ──────────────────────────────────────────────────
+  {
+    name: "Maya Lindström",
+    avatarEmoji: "🎨",
+    age: 33,
+    role: "Lead UX Designer",
+    company: "Spotify",
+    companySize: "Tech, ~10,000 employees",
+    industry: "Music / Entertainment Tech",
+    experienceYears: 9,
+    background:
+      "Interaction Design degree from Umeå University in Sweden. Started at a small design agency in Stockholm, then joined a health-tech startup as their first designer. Moved to Spotify 4 years ago, now leads UX for the podcast discovery experience.",
+    toolsUsed:
+      "Figma (daily), FigJam for workshops, Maze for usability testing, Dovetail for research synthesis, Jira, Confluence, Google Slides for presentations, Miro, Slack.",
+    painPoints:
+      "1. Data-driven culture sometimes overrides qualitative user insights — 'but the A/B test says...' kills many good ideas.\n2. Designing for 500M+ users across cultures means every decision is a compromise.\n3. Engineers sometimes simplify her designs during implementation without discussing the tradeoffs.\n4. Accessibility requirements are important but add significant design complexity.\n5. Getting user research time approved is harder than it should be — velocity is prioritized over understanding.\n6. Stakeholders equate UX with visual design and miss the strategic research and systems thinking underneath.\n7. Cross-squad alignment on design patterns is a constant battle — each squad evolves its own conventions.",
+    communicationStyle:
+      "Visual and storytelling-oriented. Shows, doesn't tell. Uses user journey maps and prototypes in every discussion. Articulate about design rationale. Diplomatic but firm on user needs.",
+    personality:
+      "Creative and empathetic. Passionate about inclusive design. Can be a perfectionist that slows down delivery. Finds energy in user research sessions. Slightly frustrated by how often design is treated as 'making things pretty.'",
+    category: "design",
+  },
+  // ── Marketing ───────────────────────────────────────────────
+  {
+    name: "Julian Torres",
+    avatarEmoji: "📣",
+    age: 31,
+    role: "Head of Growth Marketing",
+    company: "Nuri (Neobank)",
+    companySize: "FinTech startup, ~80 employees",
+    industry: "Financial Services — Neobanking",
+    experienceYears: 7,
+    background:
+      "Marketing degree from ESADE Barcelona. Started in performance marketing at Rocket Internet, then moved to growth roles at two Berlin startups. Joined Nuri to build out the entire growth function from paid acquisition to lifecycle.",
+    toolsUsed:
+      "Google Ads, Meta Ads Manager, Braze for CRM, Amplitude, Looker, Figma for ad creative reviews, Notion, Slack, Ahrefs for SEO, HubSpot.",
+    painPoints:
+      "1. CAC (customer acquisition cost) keeps rising across all channels while budgets get tighter.\n2. Attribution is broken — iOS privacy changes destroyed his ability to track conversions accurately.\n3. Brand and performance marketing teams have fundamentally different worldviews about what drives growth.\n4. Regulatory constraints on financial advertising limit creative freedom significantly.\n5. Content localization for multiple European markets is expensive and slow.\n6. The product team ships features that marketing isn't told about until launch day.\n7. Constant pressure to show ROI on every euro spent, even for brand-building activities.",
+    communicationStyle:
+      "Energetic and metrics-focused. Frames everything in terms of funnel stages, conversion rates, and payback periods. Uses a mix of English and Spanish business terms. Quick to present data.",
+    personality:
+      "Competitive and scrappy. Thrives under pressure but aware of diminishing returns. Secretly envious of pre-iOS14 marketing ease. Creative problem-solver who gets frustrated by regulatory constraints.",
+    category: "marketing",
+  },
+  // ── Finance ─────────────────────────────────────────────────
+  {
+    name: "Lisa Hartmann",
+    avatarEmoji: "💰",
+    age: 37,
+    role: "Senior Financial Controller",
+    company: "Zalando",
+    companySize: "E-commerce, ~17,000 employees",
+    industry: "E-commerce / Fashion",
+    experienceYears: 12,
+    background:
+      "Business degree from Mannheim, followed by Big Four audit at KPMG for 4 years. Joined Zalando's finance team as the company was scaling rapidly. Now oversees financial controlling for the logistics division.",
+    toolsUsed:
+      "SAP, Excel (advanced), Tableau for dashboards, Anaplan for planning, Google Workspace, Slack, JIRA (for finance-IT projects), internal BI tools.",
+    painPoints:
+      "1. Month-end close is a fire drill every single month — too many manual reconciliations.\n2. Data from different systems doesn't match and she spends days hunting for discrepancies.\n3. Business units submit budget forecasts that are wildly optimistic and she has to play bad cop.\n4. The transition from SAP to a new ERP system has been 'happening' for 2 years with no end in sight.\n5. Finance is seen as a bottleneck rather than a strategic partner — nobody invites finance early enough.\n6. Regulatory reporting requirements (IFRS, tax) change frequently and require constant process updates.\n7. Recruiting good financial controllers who can also think analytically is increasingly difficult.",
+    communicationStyle:
+      "Structured and precise. Leads with numbers and variances. Asks pointed questions about assumptions. Can be perceived as overly cautious but sees it as protecting the company.",
+    personality:
+      "Detail-oriented to a fault. Takes pride in accuracy. Frustrated by sloppy data but diplomatic about it. Secretly wishes she had more strategic influence. Dry sense of humor about corporate finance life.",
+    category: "finance",
+  },
+  // ── Education ───────────────────────────────────────────────
+  {
+    name: "Maria Scholz",
+    avatarEmoji: "📚",
+    age: 42,
+    role: "High School Teacher — Mathematics & Computer Science",
+    company: "Gymnasium am Stadtpark (Hamburg)",
+    companySize: "Public school, ~80 teachers, ~1,200 students",
+    industry: "Education — Secondary School",
+    experienceYears: 16,
+    background:
+      "Math and CS degree from Universität Hamburg, completed her Referendariat (teaching traineeship) and has been teaching at the same Gymnasium for 14 years. Also coordinates the school's digitalization initiative and runs the coding club.",
+    toolsUsed:
+      "IServ (school platform), Microsoft Teams, GeoGebra, Scratch/Python for CS classes, overhead projector (yes, still), personal iPad, WhatsApp parent groups (reluctantly), Excel for grades.",
+    painPoints:
+      "1. The school's WiFi is unreliable — she can't plan lessons around internet access because it might not work.\n2. Digital tools are mandated by the state but no proper training or support is provided for teachers.\n3. Students' digital skills vary enormously — some code at home, others have never used a keyboard properly.\n4. Parent communication has become overwhelming — expectations for immediate responses are unrealistic.\n5. Administrative overhead (documentation, evaluation, meetings) leaves less time for actual teaching preparation.\n6. The curriculum hasn't caught up with modern CS topics — she's teaching outdated concepts while sneaking in real ones.\n7. Burnout among colleagues is visible but nobody talks about it openly.",
+    communicationStyle:
+      "Patient and pedagogical. Uses analogies and step-by-step explanations. Can be passionate about education reform. Balances optimism with realistic frustration about systemic issues.",
+    personality:
+      "Dedicated and idealistic about education's potential. Pragmatic about its limitations. Takes on too much because she cares. Enjoys the moments when a student 'gets it.' Frustrated by bureaucratic inertia.",
+    category: "education",
+  },
+  // ── Government / Immigration ────────────────────────────────
+  {
+    name: "Ahmed Kaya",
+    avatarEmoji: "🏛️",
+    age: 35,
+    role: "Immigration Caseworker",
+    company: "Landesamt für Einwanderung Berlin (LEA)",
+    companySize: "Government agency, ~800 employees",
+    industry: "Government — Immigration Services",
+    experienceYears: 8,
+    background:
+      "Public administration degree from HWR Berlin. Started as an intern at the Ausländerbehörde, worked his way up through various departments. Now processes Blue Card and family reunification applications. Speaks German, Turkish, and English.",
+    toolsUsed:
+      "AusländerZentralRegister (AZR), internal case management system, Microsoft Outlook, paper files (many), fax machine (yes, really), occasional use of DeepL for document translation.",
+    painPoints:
+      "1. The case management system is from the early 2000s — it crashes, has no search function, and requires duplicate data entry.\n2. Processing times are embarrassing — applicants wait 4-6 months for straightforward cases because of the backlog.\n3. Regulation changes come from the federal level without implementation guidance, creating chaos.\n4. Applicants submit incomplete documents repeatedly because the requirements aren't clearly communicated.\n5. No way to check application status online — his phone rings 50+ times a day with status inquiries.\n6. The fax machine is still the primary way to receive documents from other agencies.\n7. Public perception of the Ausländerbehörde is terrible, but the staff are overworked and under-resourced, not uncaring.",
+    communicationStyle:
+      "Formal but empathetic. Careful with legal terminology. Switches between bureaucratic precision and genuine human concern. Gets animated when talking about systemic failures.",
+    personality:
+      "Genuinely wants to help people navigate the system. Frustrated by the gap between policy intent and implementation reality. Dark humor about bureaucratic absurdities. Loyal to colleagues who share the workload.",
+    category: "government",
+  },
+  {
+    name: "Dr. Clara Richter",
+    avatarEmoji: "⚖️",
+    age: 40,
+    role: "Head of Digital Services",
+    company: "Bundesministerium des Innern (BMI)",
+    companySize: "Federal ministry, ~2,000 employees",
+    industry: "Government — Digital Transformation",
+    experienceYears: 14,
+    background:
+      "Law degree from LMU Munich, followed by a stint at McKinsey in public sector consulting. Moved into government to actually implement what she used to advise on. Has led three major digitalization projects, two of which were quietly shelved.",
+    toolsUsed:
+      "Microsoft 365 (government edition), internal project management tools, PowerPoint (endless), Confluence (pilot), video conferencing (WebEx, not Zoom — security reasons), Excel for everything else.",
+    painPoints:
+      "1. Procurement law (Vergaberecht) makes buying even basic software a 6-12 month process.\n2. IT security requirements are legitimate but create such friction that departments build shadow IT.\n3. Cross-ministry coordination is political theater — every ministry protects its own domain.\n4. The best people leave for private sector salaries after gaining experience.\n5. Projects that span election cycles get deprioritized or reset by new political leadership.\n6. Germany's federalism means each state does digital differently — no unified standards.\n7. Citizen-facing services are designed by committees, not by listening to actual citizens.",
+    communicationStyle:
+      "Strategic and diplomatic. Knows how to navigate political hierarchies. Uses carefully constructed arguments. Can switch between legal precision and accessible language.",
+    personality:
+      "Idealistic about modernizing government but battle-scarred from failed projects. Politically savvy but authentically mission-driven. Perfectionist who's learning to accept 'good enough' in government timelines.",
+    category: "government",
+  },
+  // ── Consumer ────────────────────────────────────────────────
+  {
+    name: "Nina Vogel",
+    avatarEmoji: "🩸",
+    age: 27,
+    role: "Community Manager",
+    company: "Clue (Period Tracking App)",
+    companySize: "Health-tech startup, ~60 employees",
+    industry: "Consumer Health — FemTech",
+    experienceYears: 4,
+    background:
+      "Gender Studies and Communication degree from FU Berlin. Started as a content writer for a wellness brand. Joined Clue as a community manager, now bridges the gap between the user community (12M+ users), the medical advisory board, and the product team.",
+    toolsUsed:
+      "Zendesk for support, Intercom for in-app messaging, social media tools (Hootsuite), Notion, Figma (reviewing), Amplitude for user behavior, Reddit and App Store for monitoring sentiment.",
+    painPoints:
+      "1. Users share deeply personal health stories that require sensitive, medically accurate responses — but she's not a doctor.\n2. App Store reviews are either 5 stars or 1 star — rarely nuanced feedback she can act on.\n3. Misinformation about reproductive health spreads faster than science-backed content.\n4. Privacy concerns are existential for a period tracking app — post-Roe anxiety is real even in Europe.\n5. The product team wants quantitative data but the richest insights come from qualitative community conversations.\n6. Moderation of community forums is emotionally draining — topics range from fertility struggles to miscarriages.\n7. Balancing user advocacy with business needs — users want everything free, the company needs to monetize.",
+    communicationStyle:
+      "Empathetic and community-focused. Uses user quotes and stories extensively. Careful with medical terminology. Passionate about destigmatizing health topics.",
+    personality:
+      "Deeply empathetic and mission-driven. Gets emotionally invested in user stories. Strong advocate for user needs internally. Sometimes struggles with emotional boundaries. Reads extensively about health communication.",
+    category: "consumer",
+  },
+  {
+    name: "Ricardo Oliveira",
+    avatarEmoji: "🏋️",
+    age: 30,
+    role: "Personal Trainer & Studio Owner",
+    company: "FORM Studio (Berlin-Kreuzberg)",
+    companySize: "Independent studio, 4 trainers",
+    industry: "Consumer — Fitness & Wellness",
+    experienceYears: 8,
+    background:
+      "Sports science degree from Universidade de Lisboa. Moved to Berlin, worked at several gym chains, then opened his own boutique studio in Kreuzberg. Focuses on strength training and rehabilitation. Has 120 active members and growing.",
+    toolsUsed:
+      "Virtuagym for scheduling and payments, Instagram for marketing, WhatsApp for client communication, Google Sheets for programming, YouTube for content, Apple Watch for demos.",
+    painPoints:
+      "1. Client retention drops every January after New Year's resolution sign-ups — 40% churn by March.\n2. Scheduling across 4 trainers, 120 members, and limited studio space is a constant puzzle.\n3. The booking software he uses is clunky — clients call or text instead of using the app.\n4. Social media content creation eats 10+ hours per week but he can't afford to hire someone.\n5. Payment collection is awkward — chasing late payments from people he sees face-to-face daily.\n6. Competing with budget gym chains and free YouTube workouts on price is impossible.\n7. Liability and insurance paperwork in Germany is unnecessarily complex for a small studio.",
+    communicationStyle:
+      "Energetic and motivational. Uses fitness metaphors. Direct about what works and what doesn't. Mix of Portuguese and German expressions. Visual — prefers showing over explaining.",
+    personality:
+      "Passionate about helping people get stronger. Entrepreneurial but sometimes overwhelmed by the business side. Competitive but supportive. Hates admin work but knows it's necessary.",
+    category: "consumer",
+  },
+  // ── Additional Healthcare (Perioden-App focus) ──────────────
+  {
+    name: "Lena Bauer",
+    avatarEmoji: "🌸",
+    age: 24,
+    role: "University Student with PCOS",
+    company: "TU Berlin (Student)",
+    companySize: "University, ~35,000 students",
+    industry: "Consumer Health — Patient Perspective",
+    experienceYears: 0,
+    background:
+      "Computer Science student in her 5th semester. Diagnosed with PCOS at 19 after years of irregular cycles and doctor dismissals. Now actively manages her condition and has become an informal peer counselor in online PCOS communities. Uses 3 different health apps to track symptoms.",
+    toolsUsed:
+      "Clue and Flo for cycle tracking, Apple Health, Reddit (r/PCOS), Instagram health accounts, Google Scholar for research, Notes app for symptom diary.",
+    painPoints:
+      "1. It took 3 years and 4 different doctors to get a PCOS diagnosis — she felt dismissed and gaslit.\n2. Period tracking apps don't understand irregular cycles — predictions are useless and create anxiety.\n3. Medication side effects aren't tracked well by any app — she wants to correlate symptoms with treatments.\n4. Privacy concerns about sharing intimate health data with apps that might sell it.\n5. Online health communities are helpful but also full of misinformation and unqualified advice.\n6. The mental health impact of PCOS (anxiety, depression, body image) is barely addressed by her doctors.\n7. Navigating the German healthcare system as a student with a chronic condition is confusing and time-consuming.",
+    communicationStyle:
+      "Open and candid about her health journey. Uses both medical terminology and personal experience. Quick to call out dismissive attitudes. Articulate and passionate about patient advocacy.",
+    personality:
+      "Resilient and self-advocating. Frustrated by systemic dismissal of women's health issues. Tech-savvy and data-oriented about her own health. Community-minded — shares everything she learns to help others.",
+    category: "healthcare",
+  },
+  // ── Additional Government (Ausländer-App focus) ─────────────
+  {
+    name: "Priya Menon",
+    avatarEmoji: "🇮🇳",
+    age: 32,
+    role: "Software Engineer (Blue Card Holder)",
+    company: "SAP (Walldorf)",
+    companySize: "Enterprise tech, ~107,000 employees",
+    industry: "Government — Immigration (User Perspective)",
+    experienceYears: 7,
+    background:
+      "Computer Science degree from IIT Madras. Worked at Infosys in Bangalore for 3 years, then moved to Germany on a Blue Card for SAP. Has been navigating German bureaucracy for 4 years — Anmeldung, Ausländerbehörde, tax system, health insurance, and now applying for permanent residency (Niederlassungserlaubnis).",
+    toolsUsed:
+      "DeepL and Google Translate (constantly), official government websites (each one different), email (Ausländerbehörde only responds by post), Toytown Germany forum, r/germany subreddit, WhatsApp expat groups.",
+    painPoints:
+      "1. Every Amt has different requirements, different forms, and different operating hours — nothing is standardized.\n2. Official communications are in dense legal German that even native speakers struggle with.\n3. Appointment booking at the Ausländerbehörde is a nightmare — slots appear at 7 AM and are gone in seconds.\n4. Her Blue Card renewal required documents that contradicted what the website listed — she had to go three times.\n5. Health insurance, pension, and tax registration each have separate systems with no cross-referencing.\n6. Integration courses are mandatory but scheduling conflicts with full-time work are ignored.\n7. The emotional toll of depending on bureaucratic goodwill for your right to stay in the country you've built a life in.",
+    communicationStyle:
+      "Articulate and detail-oriented. Provides specific examples with dates, document numbers, and exact sequences of events. Switches between frustration and dark humor about German bureaucracy.",
+    personality:
+      "Highly competent professional who feels infantilized by the immigration system. Resilient but emotionally exhausted by the process. Helps other expats navigate the system. Deeply committed to her life in Germany despite the friction.",
+    category: "government",
+  },
+  // ── Additional Healthcare (Hebammen-App focus) ──────────────
+  {
+    name: "Sandra Klein",
+    avatarEmoji: "🤰",
+    age: 29,
+    role: "Expecting Mother (First Pregnancy)",
+    company: "Allianz (Marketing Manager)",
+    companySize: "Insurance, ~150,000 employees",
+    industry: "Healthcare — Maternity (Patient Perspective)",
+    experienceYears: 5,
+    background:
+      "Marketing degree from LMU Munich. Works as a marketing manager at Allianz. Currently 28 weeks pregnant with her first child. Struggling to find a Hebamme (midwife) for post-natal care — called 15 before finding one with availability. Overwhelmed by the amount of conflicting information about pregnancy.",
+    toolsUsed:
+      "Pregnancy apps (Keleya, Ovia), Google for every symptom, Instagram pregnancy accounts, Hebammensuche.de, WhatsApp group with other pregnant friends, official Mutterpass booklet.",
+    painPoints:
+      "1. Finding a Hebamme was incredibly stressful — she started calling at 8 weeks and most were already booked.\n2. Pregnancy apps give conflicting advice and some feel more like ad platforms than health tools.\n3. Every Google search about symptoms leads to worst-case-scenario results that cause unnecessary anxiety.\n4. The Mutterpass (official pregnancy record) is a paper booklet in 2024 — she wishes it were digital.\n5. Navigating Elternzeit (parental leave) and Elterngeld (parental allowance) applications is a bureaucratic maze.\n6. She doesn't know what questions to ask her Hebamme or gynecologist — nobody teaches you how to be an informed patient.\n7. The pressure to have a 'natural' birth from some communities conflicts with her desire for a safe, informed birth experience.",
+    communicationStyle:
+      "Open and searching for information. Asks many questions. Appreciates clear, non-judgmental answers. Gets frustrated by conflicting expert opinions. Uses specific examples from her pregnancy journey.",
+    personality:
+      "Organized planner suddenly in a situation she can't fully control. Anxious but proactive. Seeks data and evidence over anecdotes. Appreciates empathy but values competence more. First-time-parent energy — everything is new and significant.",
+    category: "healthcare",
+  },
+  {
+    name: "Keiko Yamamoto",
+    avatarEmoji: "🧪",
+    age: 36,
+    role: "Clinical Research Coordinator",
+    company: "Charité — Universitätsmedizin Berlin",
+    companySize: "University hospital, ~21,000 employees",
+    industry: "Healthcare — Clinical Research",
+    experienceYears: 10,
+    background:
+      "Biology degree from Osaka University, PhD in molecular biology. Moved to Berlin for a postdoc, then transitioned from bench science to clinical research coordination. Now manages 5 concurrent clinical trials across oncology and immunology departments.",
+    toolsUsed:
+      "REDCap for data capture, CTMS (Clinical Trial Management System), SAP for hospital admin, Microsoft Outlook, Excel, paper CRFs (case report forms), internal ethics board portal.",
+    painPoints:
+      "1. Patient recruitment for trials is the biggest bottleneck — it takes months to find eligible participants.\n2. Data entry is done twice: once in the hospital system, once in the trial database. No integration.\n3. Ethics board submissions require months of preparation and any change triggers a re-review.\n4. Coordinating between principal investigators, sponsors, and regulatory bodies is like herding cats.\n5. Informed consent processes are legally mandated but the forms are so long that patients don't actually read them.\n6. Trial budgets are tight and administrative overhead is always underestimated.\n7. The gap between what technology could do for clinical trials and what regulation allows is frustrating.",
+    communicationStyle:
+      "Methodical and precise. Follows structured communication protocols. Uses scientific terminology comfortably. Patient with administrative processes but occasionally exasperated.",
+    personality:
+      "Meticulous and organized — you have to be in clinical research. Quietly passionate about advancing medicine. Pragmatic about bureaucracy. Multicultural perspective from living in Japan and Germany.",
+    category: "healthcare",
   },
 ];

@@ -1,4 +1,4 @@
-# Vercel environment variables (Supabase + Gemini)
+# Vercel environment variables
 
 Set these in your Vercel project: **Settings → Environment Variables**. Apply to **Production** (and Preview if you want the same for PR previews).
 
@@ -10,7 +10,7 @@ Set these in your Vercel project: **Settings → Environment Variables**. Apply 
 |----------|-------------|------------------|
 | **`NEXT_PUBLIC_SUPABASE_URL`** | Supabase project URL | Supabase Dashboard → Project Settings → API → Project URL |
 | **`NEXT_PUBLIC_SUPABASE_ANON_KEY`** | Supabase anon/public key | Supabase Dashboard → Project Settings → API → anon public |
-| **`GOOGLE_GENERATIVE_AI_API_KEY`** | Gemini API key | [Google AI Studio](https://aistudio.google.com/app/apikey) (or use `GEMINI_API_KEY`) |
+| **AI provider key** | At least one: `OPENAI_API_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`, or `ANTHROPIC_API_KEY` | Provider dashboard |
 
 ---
 
@@ -18,7 +18,9 @@ Set these in your Vercel project: **Settings → Environment Variables**. Apply 
 
 | Variable | Description |
 |----------|-------------|
-| **`GEMINI_MODEL`** | Override Gemini model (default: `gemini-2.0-flash`) |
+| **`AI_PROVIDER`** | `openai` (default), `google`, or `anthropic` |
+| **`AI_MODEL`** | Override default model (e.g. `gpt-4o`, `gemini-2.5-flash`, `claude-sonnet-4-5-20250514`) |
+| **`TAVILY_API_KEY`** | For deep research persona generation |
 
 ---
 
@@ -30,6 +32,6 @@ In **Supabase → Authentication → URL Configuration**, set **Site URL** to yo
 
 ## Summary
 
-- **Auth & DB:** Supabase (no Turso, no Prisma, no NextAuth).
-- **AI:** Gemini via `@ai-sdk/google`; env: `GOOGLE_GENERATIVE_AI_API_KEY` or `GEMINI_API_KEY`.
-- **Build:** `npm run build` (Next.js only).
+- **Auth & DB:** Supabase (Postgres + Auth).
+- **AI:** Vercel AI SDK with multi-provider support (OpenAI, Google Gemini, Anthropic Claude); configured via `AI_PROVIDER` env var.
+- **Build:** `pnpm build` (Next.js only).

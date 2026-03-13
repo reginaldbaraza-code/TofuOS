@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateText } from "ai";
 import { getSession } from "@/lib/supabase/server";
 import { buildPersonaGenerationPrompt, buildQuickPersonaPrompt } from "@/lib/prompts";
-import { getGeminiModel, withGeminiRetry, isQuotaError } from "@/lib/gemini";
+import { getModel, withRetry, isQuotaError } from "@/lib/ai";
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
@@ -27,9 +27,9 @@ export async function POST(req: NextRequest) {
           additionalContext: body.additionalContext,
         });
 
-    const { text } = await withGeminiRetry(() =>
+    const { text } = await withRetry(() =>
       generateText({
-        model: getGeminiModel(),
+        model: getModel(),
         prompt,
         temperature: 0.9,
       })
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(persona);
   } catch (err) {
     const message = isQuotaError(err)
-      ? "Gemini quota exceeded. Wait a minute and try again, or set GEMINI_MODEL=gemini-2.0-flash for the free tier."
+      ? "AI quota exceeded. Wait a minute and try again."
       : "Failed to generate persona.";
     return NextResponse.json({ error: message }, { status: 500 });
   }

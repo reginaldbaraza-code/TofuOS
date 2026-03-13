@@ -213,7 +213,7 @@ export default function DashboardPage() {
           <EmptyState
             icon="👥"
             title="No personas yet"
-            description="Create your first PM persona to start interviewing. Use a template, quick prompt, or build from scratch."
+            description="Create your first persona to start interviewing. Use a template, quick prompt, or build from scratch."
             action={{ label: "Create Persona", href: "/personas/new" }}
           />
         ) : (

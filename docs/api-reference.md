@@ -1,14 +1,14 @@
 # API Reference
 
-All routes under `/api` (except `/api/auth/*` and `/api/register`) require an authenticated session. Unauthenticated requests receive `401 Unauthorized`. Session is established via NextAuth (credentials); see `docs/features/authentication.md`.
+All routes under `/api` (except `/api/auth/*` and `/api/register`) require an authenticated session. Unauthenticated requests receive `401 Unauthorized`. Session is established via Supabase Auth; see `docs/features/authentication.md`.
 
 ---
 
 ## Auth
 
-### `GET/POST /api/auth/[...nextauth]`
+### Auth
 
-NextAuth catch-all (sign-in, sign-out, session, callbacks). No custom documentation here; see NextAuth 5 and `src/lib/auth.ts`.
+Auth is handled by Supabase Auth (email/password). See `src/lib/supabase/` for client and server helpers.
 
 ---
 
@@ -24,7 +24,7 @@ NextAuth catch-all (sign-in, sign-out, session, callbacks). No custom documentat
 
 **Responses:**
 
-- `201`: `{ id, name, email }` (user created; client must then sign in via NextAuth).
+- `201`: `{ id, name, email }` (user created; client must then sign in via Supabase Auth).
 - `400`: `{ error }` — validation or "An account with this email already exists".
 - `500`: `{ error }` — server error.
 
@@ -45,7 +45,7 @@ NextAuth catch-all (sign-in, sign-out, session, callbacks). No custom documentat
 
 **Auth:** Required.
 
-**Body:** Persona fields (see Prisma `Persona`). At minimum: `name`, `role`. Optional: `avatarEmoji`, `age`, `company`, `companySize`, `industry`, `experienceYears`, `background`, `toolsUsed`, `painPoints`, `communicationStyle`, `personality`, `systemPrompt`. If `systemPrompt` is omitted, it is built from other fields via `buildPersonaSystemPrompt`.
+**Body:** Persona fields. At minimum: `name`, `role`. Optional: `avatarEmoji`, `age`, `company`, `companySize`, `industry`, `experienceYears`, `background`, `toolsUsed`, `painPoints`, `communicationStyle`, `personality`, `systemPrompt`. If `systemPrompt` is omitted, it is built from other fields via `buildPersonaSystemPrompt`.
 
 **Responses:**
 
@@ -142,9 +142,9 @@ NextAuth catch-all (sign-in, sign-out, session, callbacks). No custom documentat
 
 **Auth:** Required.
 
-**Body:** `{ interviewId: string, messages: UIMessage[] }`. `messages` are in AI SDK UIMessage form (may have `parts`). Server converts them to `{ role, content }` for OpenAI.
+**Body:** `{ interviewId: string, messages: UIMessage[] }`. `messages` are in AI SDK UIMessage form (may have `parts`). Server converts them to `{ role, content }` for the AI provider.
 
-**Behavior:** Loads interview (and persona) for current user; persists the last user message; streams assistant reply via OpenAI using `persona.systemPrompt`; persists assistant message in `onFinish`; updates interview `updatedAt`.
+**Behavior:** Loads interview (and persona) for current user; persists the last user message; streams assistant reply via AI provider using `persona.systemPrompt`; persists assistant message in `onFinish`; updates interview `updatedAt`.
 
 **Responses:**
 
@@ -162,7 +162,7 @@ NextAuth catch-all (sign-in, sign-out, session, callbacks). No custom documentat
 
 **Body:** `{ interviewId: string }`.
 
-**Behavior:** Loads interview and messages for current user; builds transcript; calls OpenAI to extract JSON (summary, painPoints, themes, keyQuotes, recommendations); updates interview with `status: "completed"`, `summary`, and stringified `insights`; returns parsed insights object.
+**Behavior:** Loads interview and messages for current user; builds transcript; calls AI provider to extract JSON (summary, painPoints, themes, keyQuotes, recommendations); updates interview with `status: "completed"`, `summary`, and stringified `insights`; returns parsed insights object.
 
 **Responses:**
 
@@ -204,7 +204,7 @@ NextAuth catch-all (sign-in, sign-out, session, callbacks). No custom documentat
 
 **Body:** `{ role?, company?, companySize?, industry?, experienceYears?, additionalContext? }`. Used to build the generation prompt; all optional.
 
-**Behavior:** Builds prompt via `buildPersonaGenerationPrompt`; calls OpenAI; parses first JSON object from response; returns it. Client typically then sends this object to `POST /api/personas` to save.
+**Behavior:** Builds prompt via `buildPersonaGenerationPrompt`; calls AI provider; parses first JSON object from response; returns it. Client typically then sends this object to `POST /api/personas` to save.
 
 **Responses:**
 

@@ -225,7 +225,7 @@ export default function InterviewChatPage() {
             className="mx-auto max-w-2xl px-4 py-3 rounded-[var(--radius-lg)] flex items-center justify-between gap-3 border border-[var(--danger)]/30 bg-[var(--danger-muted)]"
           >
             <span className="text-sm text-[var(--danger)]">
-              {error.message || "Something went wrong. Check that the Gemini API key is set (GOOGLE_GENERATIVE_AI_API_KEY) in your deployment."}
+              {error.message || "Something went wrong. Check that OPENAI_API_KEY is set in your deployment."}
             </span>
             <button
               type="button"

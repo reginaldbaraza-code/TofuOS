@@ -3,24 +3,24 @@
 ## File and Folder Structure
 
 - **Routes:** App Router under `src/app/`. Route groups: `(app)` for protected app pages, `(auth)` for login/register. API routes under `src/app/api/`.
-- **Lib:** Shared logic, config, and data in `src/lib/` (auth, prisma, prompts, persona-templates). No business logic in page components beyond wiring and local UI state.
-- **Components:** Reusable UI in `src/components/`. Use `providers.tsx` for app-wide providers (e.g. SessionProvider). Subfolders `chat/`, `personas/`, `ui/` are available for feature-specific or generic UI.
-- **Types:** Global type extensions (e.g. NextAuth `session.user.id`) in `src/types/`.
-- **Prisma:** Schema and migrations in `prisma/`. Client generated to `src/generated/prisma`; import from `@/generated/prisma/client`.
+- **Lib:** Shared logic, config, and data in `src/lib/` (ai, supabase, prompts, persona-templates). No business logic in page components beyond wiring and local UI state.
+- **Components:** Reusable UI in `src/components/`. Use `providers.tsx` for app-wide providers. Subfolders `chat/`, `personas/`, `ui/` are available for feature-specific or generic UI.
+- **Types:** Global type extensions in `src/types/`.
+- **Database:** SQL migrations in `supabase/migrations/`. Run new migrations in the Supabase Dashboard SQL Editor.
 
 ## Code Style
 
 - **TypeScript:** Strict mode. Prefer explicit types for API boundaries and lib functions.
 - **Styling:** Tailwind CSS. Theme via CSS variables (e.g. `var(--card)`, `var(--foreground)`) in `src/app/globals.css`; avoid hard-coded colors in components when a variable exists.
-- **API routes:** Use `auth()` from `@/lib/auth` for session. Return `NextResponse.json()` with appropriate status. Log and return generic error messages to the client; log full errors server-side.
+- **API routes:** Use Supabase server client for session. Return `NextResponse.json()` with appropriate status. Log and return generic error messages to the client; log full errors server-side.
 - **Errors:** Catch in try/catch; respond with 4xx/5xx and a stable `{ error }` shape where applicable.
 
 ## API Pattern
 
-1. Check session: `const session = await auth(); if (!session?.user?.id) return 401`.
+1. Check session via Supabase server client; return 401 if no user.
 2. Parse body/params (and validate required fields).
-3. Optionally load and check ownership (e.g. interview belongs to user).
-4. Perform Prisma and/or external API calls.
+3. Optionally load and check ownership (e.g. interview belongs to user via RLS or explicit check).
+4. Perform Supabase queries and/or AI calls via `getModel()` from `src/lib/ai.ts`.
 5. Return JSON or stream with correct status and headers.
 
 ## Documentation Standard (Best Practice)
@@ -36,7 +36,7 @@ Keep `docs/api-reference.md` and `docs/database-schema.md` in sync when you add 
 
 - Do not commit `.env` or secrets. `.env` is in `.gitignore`.
 - Run `pnpm build` before committing to catch type and build errors.
-- After schema changes: `pnpm prisma migrate dev`, `pnpm prisma generate`, and update `docs/database-schema.md` if the documented schema no longer matches.
+- After schema changes: write a new SQL migration in `supabase/migrations/`, run it in the Supabase Dashboard SQL Editor, and update `docs/database-schema.md` if the documented schema no longer matches.
 
 ## Agent Best Practices
 
@@ -54,4 +54,4 @@ Keep `docs/api-reference.md` and `docs/database-schema.md` in sync when you add 
 
 - **Error handling** — Never swallow errors silently. Log full errors server-side; show clear, user-friendly messages client-side. Use stable `{ error }` shapes in API responses.
 
-- **Persona realism** — When adding or changing templates or prompts, ensure depth: specific backstories, real tools and companies, nuanced pain points, distinct communication styles. No generic filler. Personas should feel like real PMs in conversation.
+- **Persona realism** — When adding or changing templates or prompts, ensure depth: specific backstories, real tools and companies, nuanced pain points, distinct communication styles. No generic filler. Personas should feel like real professionals in conversation.

@@ -78,7 +78,7 @@ export default function PersonasPage() {
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <PageHeader
         title="Personas"
-        description={`${personas.length} persona${personas.length !== 1 ? "s" : ""} in your library. Create and interview PM personas.`}
+        description={`${personas.length} persona${personas.length !== 1 ? "s" : ""} in your library. Create and interview personas.`}
         action={
           <Link href="/personas/new">
             <Button leftIcon={<Users className="h-4 w-4" />}>
