@@ -76,7 +76,7 @@ export default function RegisterPage() {
             Create account
           </h1>
           <p className="mt-2 text-sm text-[var(--muted)]">
-            Join to start interviewing PM personas
+            Join to start your research
           </p>
         </div>
 

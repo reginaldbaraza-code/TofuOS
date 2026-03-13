@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const prompt = `You are helping create a Product Manager persona for synthetic interviews based on a resume.
+    const prompt = `You are helping create a professional persona for synthetic research interviews based on a resume.
 
 Here is the full resume text:
 ---

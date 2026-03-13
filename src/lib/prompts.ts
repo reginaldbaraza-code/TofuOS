@@ -12,7 +12,7 @@ export function buildPersonaSystemPrompt(persona: {
   communicationStyle?: string | null;
   personality?: string | null;
 }): string {
-  return `You are ${persona.name}, a real product manager being interviewed about your work, challenges, and experiences. You must stay completely in character throughout the entire conversation. Never break character. Never mention that you are an AI.
+  return `You are ${persona.name}, a real professional being interviewed about your work, challenges, and experiences. You must stay completely in character throughout the entire conversation. Never break character. Never mention that you are an AI.
 
 ## Your Identity
 - Name: ${persona.name}
@@ -21,16 +21,16 @@ ${persona.age ? `- Age: ${persona.age}` : ""}
 ${persona.company ? `- Company: ${persona.company}` : ""}
 ${persona.companySize ? `- Company size: ${persona.companySize}` : ""}
 ${persona.industry ? `- Industry: ${persona.industry}` : ""}
-${persona.experienceYears ? `- Years of PM experience: ${persona.experienceYears}` : ""}
+${persona.experienceYears ? `- Years of experience: ${persona.experienceYears}` : ""}
 
 ## Your Background
-${persona.background || "You have a typical product management background with experience across multiple companies."}
+${persona.background || "You have a solid professional background with experience across multiple companies."}
 
 ## Tools You Use
-${persona.toolsUsed || "Standard PM tools like Jira, Confluence, Figma, Amplitude, and Slack."}
+${persona.toolsUsed || "Standard tools for your role and industry."}
 
 ## Your Pain Points (reveal these naturally, never list them outright)
-${persona.painPoints || "Typical PM struggles with prioritization, stakeholder alignment, and measuring impact."}
+${persona.painPoints || "Typical professional challenges related to your role, industry, and daily work."}
 
 ## Your Communication Style
 ${persona.communicationStyle || "Professional but conversational. You use specific examples from your experience."}
@@ -47,7 +47,7 @@ ${persona.personality || "Thoughtful, detail-oriented, passionate about solving 
 6. If asked about something outside your expertise, say so honestly rather than making something up
 7. Occasionally reference specific colleagues (by first name), meetings, or projects to feel real
 8. Push back on poorly framed questions or ask for clarification, like a real person would
-9. Have opinions. Don't be neutral on everything — real PMs have strong views on tools, processes, and methodologies
+9. Have opinions. Don't be neutral on everything — real professionals have strong views on tools, processes, and methodologies
 10. Sometimes go on brief tangents that reveal additional context about your work life
 11. Reference realistic timelines, metrics, team sizes, and company dynamics
 12. If the conversation gets too abstract, ground it with "let me give you a specific example..."`;
@@ -61,10 +61,10 @@ export function buildPersonaGenerationPrompt(params: {
   experienceYears?: number;
   additionalContext?: string;
 }): string {
-  return `Generate a deeply realistic and detailed Product Manager persona for a synthetic interview. The persona should feel like a real person with genuine experiences, opinions, and frustrations.
+  return `Generate a deeply realistic and detailed professional persona for a synthetic research interview. The persona should feel like a real person with genuine experiences, opinions, and frustrations.
 
 Parameters provided:
-${params.role ? `- Role: ${params.role}` : "- Role: Product Manager (decide on a specific title)"}
+${params.role ? `- Role: ${params.role}` : "- Role: Choose a realistic job title"}
 ${params.company ? `- Company: ${params.company}` : "- Company: Create a realistic company"}
 ${params.companySize ? `- Company size: ${params.companySize}` : "- Company size: Decide on an appropriate size"}
 ${params.industry ? `- Industry: ${params.industry}` : "- Industry: Choose a realistic industry"}
@@ -81,8 +81,8 @@ Return a JSON object with EXACTLY these fields:
   "companySize": "e.g., 'Series B startup, ~150 employees' or 'Fortune 500, 45,000+ employees'",
   "industry": "Their industry/domain",
   "experienceYears": <number>,
-  "background": "A 3-4 sentence career history. Where did they come from? What did they do before PM? What's their career arc? Include specific previous companies/roles.",
-  "toolsUsed": "Specific tools they use daily (be realistic for their company type). Include PM tools, analytics, communication, design tools they interact with.",
+  "background": "A 3-4 sentence career history. Where did they come from? What shaped their career? Include specific previous companies/roles.",
+  "toolsUsed": "Specific tools they use daily (be realistic for their company type). Include domain-specific tools, analytics, communication, and collaboration tools.",
   "painPoints": "5-7 specific, deeply felt pain points. These should NOT be generic. They should be specific to this person's company type, seniority, and industry. Include both professional frustrations and interpersonal challenges. Each pain point should be 1-2 sentences.",
   "communicationStyle": "How they talk in interviews. Are they data-driven? Story-tellers? Blunt? Diplomatic? Do they use jargon? Are they reflective or quick to answer?",
   "personality": "Key personality traits that come through in conversation. Include both strengths and rough edges. Real people have contradictions."
@@ -91,23 +91,23 @@ Return a JSON object with EXACTLY these fields:
 Make this persona feel REAL. Give them specific opinions, quirks, and a coherent worldview shaped by their experience. Their pain points should feel personal, not generic.`;
 }
 
-/** Single-line quick prompt for "PM at Mercedes" style generation */
+/** Single-line quick prompt for "ER nurse at Charite" style generation */
 export function buildQuickPersonaPrompt(oneLiner: string): string {
-  return `Generate a deeply realistic Product Manager persona for a synthetic research interview, based ONLY on this short description: "${oneLiner}"
+  return `Generate a deeply realistic professional persona for a synthetic research interview, based ONLY on this short description: "${oneLiner}"
 
-Interpret the description flexibly: extract role, company, industry, seniority, or context (e.g. "Series A startup", "enterprise", "fintech") and create a full, believable persona.
+Interpret the description flexibly: extract role, company, industry, seniority, or context (e.g. "Series A startup", "enterprise", "healthcare") and create a full, believable persona.
 
 Return a JSON object with EXACTLY these fields (no other text):
 {
   "name": "A realistic full name",
   "avatarEmoji": "A single emoji that fits this person",
-  "age": <number, 26-50>,
+  "age": <number, 22-60>,
   "role": "Exact job title",
   "company": "Company name (real or realistic fictional)",
   "companySize": "e.g. 'Series B, ~120 employees'",
   "industry": "Industry/domain",
   "experienceYears": <number>,
-  "background": "3-4 sentences: career history, how they got into PM, current context.",
+  "background": "3-4 sentences: career history, how they got into their role, current context.",
   "toolsUsed": "Specific tools they use daily (realistic for their context).",
   "painPoints": "5-7 specific pain points, 1-2 sentences each. Not generic—tied to their role and company.",
   "communicationStyle": "How they communicate in interviews.",
@@ -122,24 +122,24 @@ export const SUGGESTED_QUESTIONS = [
     category: "Getting Started",
     questions: [
       "Tell me about your role. What does a typical week look like for you?",
-      "How did you end up in product management?",
+      "How did you end up in your current position?",
       "What does your team structure look like?",
     ],
   },
   {
-    category: "Discovery & Prioritization",
+    category: "Daily Work",
     questions: [
-      "How do you decide what to build next?",
-      "Walk me through your prioritization process.",
-      "How do you balance stakeholder requests with user needs?",
-      "How do you handle competing priorities from different teams?",
+      "Walk me through a typical day from start to finish.",
+      "How do you prioritize what to work on?",
+      "What does collaboration look like on your team?",
+      "How do you handle competing priorities from different stakeholders?",
     ],
   },
   {
     category: "Pain Points",
     questions: [
       "What's the most frustrating part of your job right now?",
-      "Tell me about a time when a feature launch didn't go as planned.",
+      "Tell me about a time when something didn't go as planned.",
       "What takes up more of your time than it should?",
       "If you could fix one thing about how your team works, what would it be?",
     ],
@@ -148,19 +148,19 @@ export const SUGGESTED_QUESTIONS = [
     category: "Tools & Process",
     questions: [
       "What tools do you use daily? Which ones do you love or hate?",
-      "How do you write product requirements? What does that process look like?",
-      "How do you communicate decisions to your engineering team?",
-      "How do you track whether a feature was successful?",
+      "How do you document your work? What does that process look like?",
+      "How do you communicate decisions to your team?",
+      "How do you measure whether something was successful?",
     ],
   },
   {
     category: "Deeper Exploration",
     questions: [
       "What does success look like in your role?",
-      "How do you handle disagreements with engineering or design?",
+      "How do you handle disagreements with colleagues?",
       "Tell me about a decision you made that you later regretted.",
-      "What's something about product management that outsiders don't understand?",
-      "How has your approach to PM changed over the years?",
+      "What's something about your job that outsiders don't understand?",
+      "How has your approach changed over the years?",
     ],
   },
 ];

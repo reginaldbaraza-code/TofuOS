@@ -168,7 +168,7 @@ export async function POST(req: NextRequest) {
     const trimmedSources =
       sourcesText.length > 6000 ? sourcesText.slice(0, 6000) : sourcesText;
 
-    const prompt = `You are helping create a Product Manager persona for synthetic interviews based on deep web research.
+    const prompt = `You are helping create a professional persona for synthetic research interviews based on deep web research.
 
 Here is the user's research request:
 ---
@@ -185,7 +185,7 @@ Here are detailed research snippets and sources from across the web:
 ${trimmedSources || "No detailed sources were returned."}
 ---
 
-Using ONLY the information above, infer a realistic Product Manager persona who best represents the patterns, roles, responsibilities, and challenges described in the research.
+Using ONLY the information above, infer a realistic professional persona who best represents the patterns, roles, responsibilities, and challenges described in the research.
 
 Return a JSON object with EXACTLY these fields:
 {

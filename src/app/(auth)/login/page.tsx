@@ -74,7 +74,7 @@ export default function LoginPage() {
             Tofu
           </h1>
           <p className="mt-2 text-sm text-[var(--muted)]">
-            Sign in to start interviewing PM personas
+            Sign in to start your research
           </p>
         </div>
 

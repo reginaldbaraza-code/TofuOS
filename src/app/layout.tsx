@@ -10,9 +10,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "PM Interviews — Synthetic Product Manager Research",
+  title: "Tofu — Synthetic Research Platform",
   description:
-    "Conduct realistic synthetic interviews with AI-powered Product Manager personas to discover pain points, workflows, and insights at scale.",
+    "Conduct realistic synthetic interviews with AI-powered personas to discover pain points, workflows, and insights at scale.",
 };
 
 export default function RootLayout({

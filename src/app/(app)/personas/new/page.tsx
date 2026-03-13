@@ -21,10 +21,10 @@ import type { PersonaSourceType } from "@/types/persona";
 type Step = "sources" | "quick" | "templates" | "create" | "generate" | "companyUrl";
 
 const QUICK_EXAMPLES = [
-  "PM at Mercedes",
-  "Series A startup PM in devtools",
-  "Enterprise payments PM",
-  "Growth PM at fintech startup",
+  "ER nurse at Charite Berlin",
+  "Midwife running her own practice",
+  "UX designer at a fintech startup",
+  "Immigration lawyer in Munich",
 ];
 
 export default function NewPersonaPage() {
@@ -199,7 +199,7 @@ export default function NewPersonaPage() {
       setError("Please enter a valid company URL.");
       return;
     }
-    const query = `Research this company website and its products, customers, and product management roles: ${url}`;
+    const query = `Research this company website, its products, customers, and key professional roles: ${url}`;
     setIsDeepSearching(true);
     setLoading(true);
     setError("");
@@ -316,7 +316,7 @@ export default function NewPersonaPage() {
       "Reviewing leadership and team pages…",
       "Analyzing investor and about pages…",
       "Summarizing company positioning…",
-      "Deriving typical PM responsibilities…",
+      "Deriving typical role responsibilities…",
       "Identifying main user groups…",
       "Extracting key challenges from public info…",
       "Cross-checking findings across sources…",
@@ -409,7 +409,7 @@ export default function NewPersonaPage() {
               New persona
             </h1>
             <p className="mt-2 text-sm text-[var(--muted)]">
-              Create a PM persona to interview. Choose how you’d like to start.
+              Create a persona to interview. Choose how you’d like to start.
             </p>
           </div>
 
@@ -420,14 +420,14 @@ export default function NewPersonaPage() {
               <span className="text-sm font-semibold">Quick generate</span>
             </div>
             <p className="mb-4 text-sm text-[var(--muted)]">
-              Describe the PM in one line. AI will generate a full persona.
+              Describe the persona in one line. AI will generate the rest.
             </p>
             <form onSubmit={handleQuickGenerate} className="flex gap-2">
               <input
                 type="text"
                 value={quickPrompt}
                 onChange={(e) => setQuickPrompt(e.target.value)}
-                placeholder='e.g. "PM at Mercedes" or "Growth PM at fintech startup"'
+                placeholder='e.g. "ER nurse at Charite" or "UX designer at fintech startup"'
                 className="flex-1 rounded-[var(--radius-lg)] border bg-[var(--card)] px-4 py-3 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-glow)]"
               />
               <Button type="submit" disabled={loading}>
@@ -470,7 +470,7 @@ export default function NewPersonaPage() {
             <SourceCard
               icon={<FileText className="h-5 w-5" />}
               title="Templates"
-              description="Pre-built PM personas. One click to add."
+              description="Pre-built personas across industries. One click to add."
               onClick={() => setStep("templates")}
             />
             <SourceCard
@@ -534,8 +534,8 @@ export default function NewPersonaPage() {
                 Choose a template
               </h2>
               <p className="text-sm text-[var(--muted)]">
-                Pre-built realistic PM personas. Add to your library with one
-                click.
+                Pre-built realistic personas across industries. Add to your library
+                with one click.
               </p>
               <div className="space-y-3">
                 {PERSONA_TEMPLATES.map((template, i) => (
@@ -589,7 +589,7 @@ export default function NewPersonaPage() {
                 label="Role *"
                 value={form.role}
                 onChange={(e) => updateForm("role", e.target.value)}
-                placeholder="e.g. Senior Product Manager"
+                placeholder="e.g. ER Nurse, UX Designer, Midwife"
                 required
               />
               <div className="grid gap-4 sm:grid-cols-2">
@@ -668,9 +668,9 @@ export default function NewPersonaPage() {
                 Run deep search
               </h2>
               <div className="rounded-[var(--radius-lg)] bg-[var(--accent-muted)] p-4 text-sm text-[var(--accent)]">
-                Paste or describe everything that matters about this PM: role,
-                company, product, seniority, industry, challenges, and any other
-                context. Deep search will turn this into a full persona.
+                Paste or describe everything that matters about this persona: role,
+                company, seniority, industry, challenges, and any other context.
+                Deep search will turn this into a full persona.
               </div>
               <Textarea
                 label="Deep search context"
@@ -681,7 +681,7 @@ export default function NewPersonaPage() {
                     additionalContext: e.target.value,
                   }))
                 }
-                placeholder="Example: Senior PM at a German automotive OEM working on in-car software platforms, 8 years experience, leads a cross‑functional team, struggles with aligning hardware and software roadmaps..."
+                placeholder="Example: Freelance midwife in Berlin, 12 years experience, manages 60 births per year, struggles with documentation during births and insurance billing..."
                 rows={6}
               />
               {isDeepSearching && (
@@ -707,7 +707,7 @@ export default function NewPersonaPage() {
               </h2>
               <div className="rounded-[var(--radius-lg)] bg-[var(--accent-muted)] p-4 text-sm text-[var(--accent)]">
                 Paste a company website URL. We’ll research the company and
-                generate a persona representing a typical Product Manager there.
+                generate a persona representing a typical professional there.
               </div>
               <Input
                 label="Company URL"
