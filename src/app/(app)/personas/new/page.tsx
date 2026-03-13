@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import type { PersonaSourceType } from "@/types/persona";
 
-type Step = "sources" | "quick" | "templates" | "create" | "generate";
+type Step = "sources" | "quick" | "templates" | "create" | "generate" | "companyUrl";
 
 const QUICK_EXAMPLES = [
   "PM at Mercedes",
@@ -65,6 +65,7 @@ export default function NewPersonaPage() {
     experienceYears: "",
     additionalContext: "",
   });
+  const [companyUrl, setCompanyUrl] = useState("");
 
   const updateForm = (key: string, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -187,6 +188,45 @@ export default function NewPersonaPage() {
     }
   };
 
+  const handleCompanyUrlDeepSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const url = companyUrl.trim();
+    if (!url) {
+      setError("Please enter a company URL.");
+      return;
+    }
+    if (!/^https?:\/\//i.test(url) && !url.includes(".")) {
+      setError("Please enter a valid company URL.");
+      return;
+    }
+    const query = `Research this company website and its products, customers, and product management roles: ${url}`;
+    setIsDeepSearching(true);
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/deep-research", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => null);
+        throw new Error(err?.error || "Deep research failed");
+      }
+      const persona = await res.json();
+      await savePersona(persona);
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : "Deep research failed. Please try again."
+      );
+      setLoading(false);
+    } finally {
+      setIsDeepSearching(false);
+    }
+  };
+
   const handleTemplate = async (index: number) => {
     await savePersona({ ...PERSONA_TEMPLATES[index] });
   };
@@ -238,7 +278,8 @@ export default function NewPersonaPage() {
 
   const getDeepSearchStatus = () => {
     if (!isDeepSearching) return "";
-    const messages = [
+
+    const textSearchMessages = [
       "Scanning academic papers…",
       "Reading Reddit discussions…",
       "Analyzing job postings…",
@@ -260,6 +301,33 @@ export default function NewPersonaPage() {
       "Reviewing academic citations…",
       "Identifying emerging trends…",
     ];
+
+    const companyUrlMessages = [
+      "Resolving company domain…",
+      "Crawling homepage and key subpages…",
+      "Analyzing product and solutions pages…",
+      "Checking pricing and plans…",
+      "Reviewing careers and jobs pages…",
+      "Identifying product lines and segments…",
+      "Scanning customer logos and case studies…",
+      "Reviewing blog and news posts…",
+      "Analyzing documentation and help center…",
+      "Checking integrations and partner pages…",
+      "Reviewing leadership and team pages…",
+      "Analyzing investor and about pages…",
+      "Summarizing company positioning…",
+      "Deriving typical PM responsibilities…",
+      "Identifying main user groups…",
+      "Extracting key challenges from public info…",
+      "Cross-checking findings across sources…",
+      "Condensing insights into persona traits…",
+      "Finalizing persona profile…",
+      "Preparing persona for your library…",
+    ];
+
+    const messages =
+      step === "companyUrl" ? companyUrlMessages : textSearchMessages;
+
     return messages[deepSearchStep % messages.length];
   };
 
@@ -435,7 +503,7 @@ export default function NewPersonaPage() {
               icon={<Globe className="h-5 w-5" />}
               title="Company URL"
               description="Scrape company context for the persona."
-              comingSoon
+              onClick={() => setStep("companyUrl")}
             />
             <SourceCard
               icon={<Sparkles className="h-5 w-5" />}
@@ -634,6 +702,37 @@ export default function NewPersonaPage() {
               )}
               <Button type="submit" className="w-full" disabled={loading || isDeepSearching}>
                 {loading || isDeepSearching ? "Running…" : "Run deep search"}
+              </Button>
+            </form>
+          )}
+
+          {step === "companyUrl" && (
+            <form onSubmit={handleCompanyUrlDeepSearch} className="space-y-5">
+              <h2 className="text-lg font-semibold text-[var(--foreground)]">
+                Company URL deep search
+              </h2>
+              <div className="rounded-[var(--radius-lg)] bg-[var(--accent-muted)] p-4 text-sm text-[var(--accent)]">
+                Paste a company website URL. We’ll research the company and
+                generate a persona representing a typical Product Manager there.
+              </div>
+              <Input
+                label="Company URL"
+                value={companyUrl}
+                onChange={(e) => setCompanyUrl(e.target.value)}
+                placeholder="https://example.com"
+              />
+              {isDeepSearching && (
+                <div className="space-y-2">
+                  <div className="text-xs font-medium text-[var(--muted)]">
+                    {deepSearchStatus}
+                  </div>
+                  <div className="relative h-1 w-full overflow-hidden rounded-full bg-[var(--muted-bg)]">
+                    <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-[var(--accent)]/0 via-[var(--accent)]/70 to-[var(--accent)]/0" />
+                  </div>
+                </div>
+              )}
+              <Button type="submit" className="w-full" disabled={loading || isDeepSearching}>
+                {loading || isDeepSearching ? "Running…" : "Run search"}
               </Button>
             </form>
           )}
