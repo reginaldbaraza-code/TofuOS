@@ -487,14 +487,8 @@ export default function NewPersonaPage() {
             />
             <SourceCard
               icon={<Linkedin className="h-5 w-5" />}
-              title="LinkedIn"
-              description="Import from LinkedIn profile."
-              comingSoon
-            />
-            <SourceCard
-              icon={<Briefcase className="h-5 w-5" />}
-              title="Resume"
-              description="Upload a resume to create a persona."
+              title="LinkedIn PDF"
+              description="Export your LinkedIn profile as PDF and upload it."
               onClick={() => {
                 resumeInputRef.current?.click();
               }}
