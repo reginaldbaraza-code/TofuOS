@@ -1,6 +1,6 @@
-# Supabase + Gemini setup
+# Supabase + AI provider setup
 
-This app uses **Supabase** for auth and database, and **Google Gemini** for AI (personas, chat, insights).
+This app uses **Supabase** for auth and database, and a configurable **AI provider** (OpenAI, Google Gemini, or Anthropic Claude) for personas, chat, and insights.
 
 ---
 
@@ -25,13 +25,18 @@ This app uses **Supabase** for auth and database, and **Google Gemini** for AI (
 
 ---
 
-## 3. Gemini API key
+## 3. AI provider API key
 
-1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey).
-2. Create an API key.
-3. Set one of these in your env (the app reads whichever is set):
-   - **`GOOGLE_GENERATIVE_AI_API_KEY`** (recommended), or
-   - **`GEMINI_MODEL`** is optional; default is `gemini-2.0-flash`.
+Choose one provider and get an API key:
+
+| Provider | Key variable | Where to get it |
+|----------|-------------|-----------------|
+| OpenAI (default) | `OPENAI_API_KEY` | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
+| Google Gemini | `GOOGLE_GENERATIVE_AI_API_KEY` | [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) |
+| Anthropic Claude | `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) |
+
+Set `AI_PROVIDER` to `openai`, `google`, or `anthropic` (default: `openai`).
+Optionally set `AI_MODEL` to override the default model.
 
 ---
 
@@ -44,15 +49,16 @@ Create `.env.local` (from `.env.example`):
 NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
-# Gemini
-GOOGLE_GENERATIVE_AI_API_KEY=your_gemini_api_key
+# AI Provider (default: openai)
+AI_PROVIDER=openai
+OPENAI_API_KEY=sk-...
 ```
 
 Run the app:
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000), then **Create one** to register. The trigger in the DB will create a `profiles` row with your name from signup.
@@ -68,7 +74,8 @@ Open [http://localhost:3000](http://localhost:3000), then **Create one** to regi
    |------|--------|
    | `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL |
    | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anon key |
-   | `GOOGLE_GENERATIVE_AI_API_KEY` | Your Gemini API key |
+   | `AI_PROVIDER` | `openai`, `google`, or `anthropic` |
+   | `OPENAI_API_KEY` | Your provider API key |
 
 3. Deploy. After the first deploy, in Supabase **Authentication → URL Configuration**, set **Site URL** to your Vercel URL (e.g. `https://your-app.vercel.app`) so redirects work.
 
@@ -76,6 +83,6 @@ Open [http://localhost:3000](http://localhost:3000), then **Create one** to regi
 
 ## Summary
 
-- **Auth & DB:** Supabase (Postgres + Auth). No Prisma or NextAuth.
-- **AI:** Gemini via `@ai-sdk/google`; env: `GOOGLE_GENERATIVE_AI_API_KEY` (or `GEMINI_API_KEY`).
-- **Build:** `npm run build` (no Prisma generate).
+- **Auth & DB:** Supabase (Postgres + Auth).
+- **AI:** Vercel AI SDK with multi-provider support; configured via `AI_PROVIDER` env var.
+- **Build:** `pnpm build`.
