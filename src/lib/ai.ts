@@ -1,19 +1,52 @@
 /**
  * Shared AI model and retry helpers.
- * Uses OpenAI via Vercel AI SDK. Set OPENAI_MODEL to override the default model.
+ *
+ * Supports multiple providers via the AI_PROVIDER env var:
+ *   - "openai"    (default) — requires OPENAI_API_KEY
+ *   - "google"    — requires GOOGLE_GENERATIVE_AI_API_KEY
+ *   - "anthropic" — requires ANTHROPIC_API_KEY
+ *
+ * Override the model with AI_MODEL (or legacy OPENAI_MODEL).
  */
 import { openai } from "@ai-sdk/openai";
+import { google } from "@ai-sdk/google";
+import { anthropic } from "@ai-sdk/anthropic";
 
-const DEFAULT_MODEL = "gpt-4o-mini";
+type AIProvider = "openai" | "google" | "anthropic";
 
-export function getModel() {
-  return openai(process.env.OPENAI_MODEL || DEFAULT_MODEL);
+const PROVIDER_DEFAULTS: Record<AIProvider, string> = {
+  openai: "gpt-4o-mini",
+  google: "gemini-2.5-flash",
+  anthropic: "claude-sonnet-4-5-20250514",
+};
+
+const PROVIDER_FACTORIES = {
+  openai: (model: string) => openai(model),
+  google: (model: string) => google(model),
+  anthropic: (model: string) => anthropic(model),
+} as const;
+
+function getProvider(): AIProvider {
+  const p = (process.env.AI_PROVIDER || "openai").toLowerCase();
+  if (p !== "openai" && p !== "google" && p !== "anthropic") {
+    throw new Error(
+      `Unknown AI_PROVIDER: "${p}". Use "openai", "google", or "anthropic".`
+    );
+  }
+  return p;
 }
 
-/** Check if an error is a quota/rate-limit error from OpenAI */
+export function getModel() {
+  const provider = getProvider();
+  const model =
+    process.env.AI_MODEL || process.env.OPENAI_MODEL || PROVIDER_DEFAULTS[provider];
+  return PROVIDER_FACTORIES[provider](model);
+}
+
+/** Check if an error is a quota/rate-limit error from any AI provider */
 export function isQuotaError(err: unknown): boolean {
   const msg = err instanceof Error ? err.message : String(err);
-  return /quota|rate.?limit|429|insufficient_quota|too many requests|exceeded/i.test(
+  return /quota|rate.?limit|429|insufficient_quota|too many requests|exceeded|resource.?exhausted/i.test(
     msg
   );
 }
