@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { generateText } from "ai";
 import { getSession } from "@/lib/supabase/server";
-import { getGeminiModel, isQuotaError, withGeminiRetry } from "@/lib/gemini";
+import { getModel, isQuotaError, withRetry } from "@/lib/ai";
 
 export const runtime = "nodejs";
 
@@ -208,9 +208,9 @@ The persona must feel realistic and clearly connected to the research context. D
 
 Return only the JSON object, with no additional explanation.`;
 
-    const { text: modelText } = await withGeminiRetry(() =>
+    const { text: modelText } = await withRetry(() =>
       generateText({
-        model: getGeminiModel(),
+        model: getModel(),
         prompt,
         temperature: 0.8,
       })
@@ -229,7 +229,7 @@ Return only the JSON object, with no additional explanation.`;
     return NextResponse.json(persona);
   } catch (err) {
     const message = isQuotaError(err)
-      ? "Gemini quota exceeded. Wait a minute and try again, or set GEMINI_MODEL=gemini-2.0-flash for the free tier."
+      ? "AI quota exceeded. Wait a minute and try again."
       : "Deep research failed. Please try again.";
     return NextResponse.json({ error: message }, { status: 500 });
   }

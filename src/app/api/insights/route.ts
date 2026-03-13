@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateText } from "ai";
 import { getSession } from "@/lib/supabase/server";
 import { createClient } from "@/lib/supabase/server";
-import { getGeminiModel, withGeminiRetry, isQuotaError } from "@/lib/gemini";
+import { getModel, withRetry, isQuotaError } from "@/lib/ai";
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
@@ -48,9 +48,9 @@ export async function POST(req: NextRequest) {
       )
       .join("\n\n");
 
-    const { text } = await withGeminiRetry(() =>
+    const { text } = await withRetry(() =>
       generateText({
-        model: getGeminiModel(),
+        model: getModel(),
         prompt: `Analyze this interview transcript with ${personaRow?.name} (${personaRow?.role}${personaRow?.company ? ` at ${personaRow.company}` : ""}).
 
 Extract the following in JSON format:
@@ -91,7 +91,7 @@ ${transcript}`,
     return NextResponse.json(insights);
   } catch (err) {
     const message = isQuotaError(err)
-      ? "Gemini quota exceeded. Wait a minute and try again, or set GEMINI_MODEL=gemini-2.0-flash for the free tier."
+      ? "AI quota exceeded. Wait a minute and try again."
       : "Failed to generate insights.";
     return NextResponse.json({ error: message }, { status: 500 });
   }

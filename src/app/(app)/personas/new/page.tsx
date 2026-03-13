@@ -112,7 +112,7 @@ export default function NewPersonaPage() {
       await savePersona(persona);
     } catch {
       setError(
-        "Failed to generate. Check that GOOGLE_GENERATIVE_AI_API_KEY is set."
+        "Failed to generate. Check that OPENAI_API_KEY is set."
       );
       setLoading(false);
     }
@@ -147,7 +147,7 @@ export default function NewPersonaPage() {
       await savePersona(persona);
     } catch {
       setError(
-        "Failed to generate. Check that GOOGLE_GENERATIVE_AI_API_KEY is set."
+        "Failed to generate. Check that OPENAI_API_KEY is set."
       );
       setLoading(false);
     }
@@ -254,8 +254,8 @@ export default function NewPersonaPage() {
         "Parsing sections & bullet points…",
       ],
       llm: [
-        "Asking Gemini…",
-        "Letting Gemini think…",
+        "Generating persona…",
+        "Analyzing resume…",
         "Aligning resume details with persona format…",
       ],
       saving: ["Saving persona…", "Finishing up persona details…"],
@@ -381,7 +381,7 @@ export default function NewPersonaPage() {
                 ? "Request took too long"
                 : e instanceof Error
                   ? e.message
-                  : "Failed to import resume. Check that GOOGLE_GENERATIVE_AI_API_KEY is set.";
+                  : "Failed to import resume. Check that OPENAI_API_KEY is set.";
             setError(message);
             setLoading(false);
           } finally {

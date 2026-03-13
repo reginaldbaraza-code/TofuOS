@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { streamText } from "ai";
 import { getSession } from "@/lib/supabase/server";
 import { createClient } from "@/lib/supabase/server";
-import { getGeminiModel, isQuotaError } from "@/lib/gemini";
+import { getModel, isQuotaError } from "@/lib/ai";
 
 interface UIMessageInput {
   role: string;
@@ -55,10 +55,10 @@ export async function POST(req: NextRequest) {
   const persona = (interviewRow as { persona: Record<string, unknown> }).persona;
   const systemPrompt = persona?.system_prompt as string;
 
-  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     return Response.json(
-      { error: "AI is not configured. Set GOOGLE_GENERATIVE_AI_API_KEY or GEMINI_API_KEY in your environment." },
+      { error: "AI is not configured. Set OPENAI_API_KEY in your environment." },
       { status: 503 }
     );
   }
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const result = streamText({
-      model: getGeminiModel(),
+      model: getModel(),
       system: systemPrompt,
       messages: standardMessages,
       onFinish: async ({ text }) => {
@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const rawMessage = err instanceof Error ? err.message : "AI request failed.";
     const message = isQuotaError(err)
-      ? "Gemini quota exceeded. Try again in a minute, or set GEMINI_MODEL=gemini-2.0-flash in your environment."
+      ? "AI quota exceeded. Try again in a minute."
       : rawMessage;
     return Response.json({ error: message }, { status: 502 });
   }
